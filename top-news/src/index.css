@@ -1,0 +1,251 @@
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* News Brand Colors */
+    --background: 0 0% 100%;
+    --foreground: 220 9% 15%;
+    
+    /* News Primary - Professional Red */
+    --primary: 0 73% 41%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 0 73% 35%;
+    
+    /* News Secondary - Trust Blue */
+    --secondary: 217 91% 60%;
+    --secondary-foreground: 0 0% 98%;
+    --secondary-hover: 217 91% 50%;
+    
+    /* Breaking News Orange */
+    --breaking: 25 95% 53%;
+    --breaking-foreground: 0 0% 98%;
+    
+    /* News Categories */
+    --tech: 142 71% 45%;
+    --sports: 271 91% 65%;
+    --business: 47 96% 53%;
+    --politics: 262 83% 58%;
+    --entertainment: 340 82% 52%;
+    
+    /* Content Areas */
+    --card: 0 0% 100%;
+    --card-foreground: 220 9% 15%;
+    --card-border: 220 13% 91%;
+    
+    /* Interactive Elements */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 9% 15%;
+    
+    /* Form Elements */
+    --input: 220 13% 91%;
+    --border: 220 13% 91%;
+    --ring: 0 73% 41%;
+    
+    /* Utility */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --radius: 0.5rem;
+    
+    /* News Layout Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(0 73% 41%) 0%, hsl(0 73% 35%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 98%) 100%);
+    --gradient-breaking: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(25 95% 47%) 100%);
+    
+    /* Shadows */
+    --shadow-news-card: 0 2px 8px -2px hsl(220 13% 91%);
+    --shadow-hero: 0 10px 30px -10px hsl(0 73% 41% / 0.3);
+    --shadow-floating: 0 4px 20px -4px hsl(220 13% 91% / 0.8);
+    
+    /* Sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 220 9% 15%;
+    --sidebar-primary: 0 73% 41%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 220 9% 15%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 0 73% 41%;
+  }
+
+  .dark {
+    /* Dark Mode News Colors */
+    --background: 220 27% 8%;
+    --foreground: 220 14% 96%;
+    
+    /* News Primary - Bright Red for Dark */
+    --primary: 0 84% 60%;
+    --primary-foreground: 220 27% 8%;
+    --primary-hover: 0 84% 55%;
+    
+    /* News Secondary - Bright Blue for Dark */
+    --secondary: 217 91% 70%;
+    --secondary-foreground: 220 27% 8%;
+    --secondary-hover: 217 91% 65%;
+    
+    /* Breaking News Orange - Dark Mode */
+    --breaking: 25 95% 58%;
+    --breaking-foreground: 220 27% 8%;
+    
+    /* News Categories - Dark Mode */
+    --tech: 142 71% 55%;
+    --sports: 271 91% 75%;
+    --business: 47 96% 58%;
+    --politics: 262 83% 68%;
+    --entertainment: 340 82% 62%;
+    
+    /* Content Areas - Dark */
+    --card: 220 27% 12%;
+    --card-foreground: 220 14% 96%;
+    --card-border: 220 13% 18%;
+    
+    /* Interactive Elements - Dark */
+    --muted: 220 13% 18%;
+    --muted-foreground: 220 9% 65%;
+    --accent: 220 13% 18%;
+    --accent-foreground: 220 14% 96%;
+    
+    /* Form Elements - Dark */
+    --input: 220 13% 18%;
+    --border: 220 13% 18%;
+    --ring: 0 84% 60%;
+    
+    /* Utility - Dark */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 220 27% 8%;
+    
+    /* Dark Mode Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(0 84% 60%) 0%, hsl(0 84% 55%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(220 27% 12%) 0%, hsl(220 27% 10%) 100%);
+    --gradient-breaking: linear-gradient(135deg, hsl(25 95% 58%) 0%, hsl(25 95% 52%) 100%);
+    
+    /* Dark Shadows */
+    --shadow-news-card: 0 2px 8px -2px hsl(220 27% 8% / 0.5);
+    --shadow-hero: 0 10px 30px -10px hsl(0 84% 60% / 0.3);
+    --shadow-floating: 0 4px 20px -4px hsl(220 27% 8% / 0.8);
+    
+    /* Sidebar - Dark */
+    --sidebar-background: 220 27% 10%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-primary: 0 84% 60%;
+    --sidebar-primary-foreground: 220 27% 8%;
+    --sidebar-accent: 220 13% 18%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 220 13% 18%;
+    --sidebar-ring: 0 84% 60%;
+  }
+}
+
+@layer base {
+  html {
+      scroll-behavior: smooth;
+    }
+  
+  body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+        "Droid Sans", "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  /* News Typography */
+  .news-headline {
+    @apply text-foreground font-bold leading-tight tracking-tight;
+  }
+  
+  .news-description {
+    @apply text-muted-foreground leading-relaxed;
+  }
+  
+  .news-meta {
+    @apply text-sm text-muted-foreground;
+  }
+  
+  /* News Layout Classes */
+  .news-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .news-card {
+    @apply bg-card border border-card-border rounded-lg overflow-hidden shadow-[var(--shadow-news-card)] transition-all duration-200 hover:shadow-[var(--shadow-floating)];
+  }
+  
+  .news-hero-card {
+    @apply bg-gradient-to-br from-primary to-primary-hover text-primary-foreground shadow-[var(--shadow-hero)];
+  }
+  
+  /* Breaking News Styles */
+  .breaking-badge {
+    @apply bg-breaking text-breaking-foreground px-2 py-1 text-xs font-bold rounded uppercase tracking-wide;
+  }
+  
+  /* Category Badges */
+  .category-tech { @apply bg-tech text-white; }
+  .category-sports { @apply bg-sports text-white; }
+  .category-business { @apply bg-business text-white; }
+  .category-politics { @apply bg-politics text-white; }
+  .category-entertainment { @apply bg-entertainment text-white; }
+  
+  /* Animations */
+  .news-fade-in {
+    @apply animate-in fade-in-0 slide-in-from-bottom-4 duration-500;
+  }
+  
+  .news-scale-hover {
+    @apply transition-transform duration-200 hover:scale-[1.02];
+  }
+  
+  /* Scrollbar Hide */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Line Clamp Utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-red-600 border-2 border-red-600 font-semibold py-2 px-6 rounded-lg transition-colors duration-200;
+  }
+}
+

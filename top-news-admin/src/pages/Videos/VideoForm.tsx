@@ -1,0 +1,349 @@
+import React, { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
+import { ArrowLeft } from 'lucide-react';
+import { videoService, generateSlug } from '@/services/videoService';
+import { storageService } from '@/services/storageService';
+import { ShortVideo, LANGUAGE_OPTIONS, CATEGORIES } from '@/types';
+import TagInput from '@/components/Common/TagInput';
+import FileUpload from '@/components/Common/FileUpload';
+import LoadingSpinner from '@/components/Common/LoadingSpinner';
+import toast from 'react-hot-toast';
+
+const validationSchema = Yup.object({
+  title: Yup.string().required('Title is required'),
+  slug: Yup.string().required('Slug is required'),
+  description: Yup.string().required('Description is required'),
+  videoUrl: Yup.string().required('Video file is required'),
+  thumbnailUrl: Yup.string().required('Thumbnail image is required'),
+  duration: Yup.number().min(1, 'Duration must be at least 1 second').required('Duration is required'),
+  category: Yup.string().required('Category is required'),
+  topic: Yup.string().required('Topic is required'),
+  language: Yup.string().required('Language is required'),
+  section: Yup.string().required('Section is required'),
+  status: Yup.string().oneOf(['draft', 'published']).required('Status is required'),
+  publishedAt: Yup.string().required('Published date is required'),
+  sourceUrl: Yup.string(),
+});
+
+const VideoForm: React.FC = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditing = !!id;
+  const queryClient = useQueryClient();
+  const [tempId] = useState(() => id || `video_${Date.now()}`);
+
+  const { data: existingVideo, isLoading: isLoadingVideo } = useQuery({
+    queryKey: ['video', id],
+    queryFn: async () => {
+      if (!id) return null;
+      return videoService.getVideoById(id);
+    },
+    enabled: isEditing,
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data: Partial<ShortVideo>) => {
+      if (isEditing && id) {
+        return videoService.updateVideo(id, data);
+      }
+      return videoService.createVideo(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['videos'] });
+      queryClient.invalidateQueries({ queryKey: ['video-stats'] });
+      toast.success(isEditing ? 'Video updated successfully' : 'Video created successfully');
+      navigate('/videos');
+    },
+    onError: (err: any) => {
+      console.error('Mutation error:', err);
+      toast.error(err.message || (isEditing ? 'Failed to update video' : 'Failed to create video'));
+    },
+  });
+
+  if (isEditing && isLoadingVideo) {
+    return <LoadingSpinner />;
+  }
+
+  const initialValues: ShortVideo = existingVideo || {
+    title: '',
+    slug: '',
+    description: '',
+    videoUrl: '',
+    thumbnailUrl: '',
+    duration: 60,
+    category: '',
+    topic: 'general',
+    language: 'en',
+    section: 'main',
+    keywords: [],
+    tags: [],
+    status: 'published',
+    views: 0,
+    publishedAt: new Date().toISOString().slice(0, 16),
+    sourceUrl: '',
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center space-x-4">
+        <button
+          onClick={() => navigate('/videos')}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {isEditing ? 'Edit Video' : 'Create Video'}
+        </h1>
+      </div>
+
+      <div className="bg-white p-8 rounded-lg shadow-sm border">
+        <Formik
+          initialValues={initialValues}
+          validationSchema={validationSchema}
+          onSubmit={(values) => {
+            mutation.mutate(values);
+          }}
+          enableReinitialize
+        >
+          {({ values, setFieldValue, isSubmitting, handleChange }) => (
+            <Form className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Title *
+                  </label>
+                  <Field
+                    name="title"
+                    type="text"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      handleChange(e);
+                      if (!isEditing || !values.slug) {
+                        setFieldValue('slug', generateSlug(e.target.value));
+                      }
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <ErrorMessage name="title" component="div" className="text-red-600 text-sm mt-1" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Slug * (Auto-generated or custom)
+                  </label>
+                  <Field
+                    name="slug"
+                    type="text"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 font-mono text-sm"
+                  />
+                  <ErrorMessage name="slug" component="div" className="text-red-600 text-sm mt-1" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Topic *
+                  </label>
+                  <Field
+                    name="topic"
+                    type="text"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <ErrorMessage name="topic" component="div" className="text-red-600 text-sm mt-1" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status *
+                  </label>
+                  <Field
+                    as="select"
+                    name="status"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="published">Published (Live)</option>
+                    <option value="draft">Draft (Hidden from public site)</option>
+                  </Field>
+                  <ErrorMessage name="status" component="div" className="text-red-600 text-sm mt-1" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description *
+                </label>
+                <Field
+                  as="textarea"
+                  name="description"
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <ErrorMessage name="description" component="div" className="text-red-600 text-sm mt-1" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Video File *
+                  </label>
+                  <FileUpload
+                    value={values.videoUrl}
+                    onChange={(url) => setFieldValue('videoUrl', url)}
+                    onFileUpload={(file, progress) => storageService.uploadVideo(file, tempId, progress)}
+                    accept="video/*"
+                    label="Video File"
+                    maxSizeMB={100}
+                  />
+                  <ErrorMessage name="videoUrl" component="div" className="text-red-600 text-sm mt-1" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Thumbnail Image *
+                  </label>
+                  <FileUpload
+                    value={values.thumbnailUrl}
+                    onChange={(url) => setFieldValue('thumbnailUrl', url)}
+                    onFileUpload={(file, progress) => storageService.uploadVideoThumbnail(file, tempId, progress)}
+                    accept="image/*"
+                    label="Thumbnail Image"
+                    maxSizeMB={10}
+                  />
+                  <ErrorMessage name="thumbnailUrl" component="div" className="text-red-600 text-sm mt-1" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Duration (seconds) *
+                  </label>
+                  <Field
+                    name="duration"
+                    type="number"
+                    min="1"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <ErrorMessage name="duration" component="div" className="text-red-600 text-sm mt-1" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Language *
+                  </label>
+                  <Field
+                    as="select"
+                    name="language"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {LANGUAGE_OPTIONS.map((lang) => (
+                      <option key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </option>
+                    ))}
+                  </Field>
+                  <ErrorMessage name="language" component="div" className="text-red-600 text-sm mt-1" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category *
+                  </label>
+                  <Field
+                    as="select"
+                    name="category"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select Category</option>
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      </option>
+                    ))}
+                  </Field>
+                  <ErrorMessage name="category" component="div" className="text-red-600 text-sm mt-1" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Published Date *
+                  </label>
+                  <Field
+                    name="publishedAt"
+                    type="datetime-local"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <ErrorMessage name="publishedAt" component="div" className="text-red-600 text-sm mt-1" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Source URL
+                  </label>
+                  <Field
+                    name="sourceUrl"
+                    type="url"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <ErrorMessage name="sourceUrl" component="div" className="text-red-600 text-sm mt-1" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Keywords
+                  </label>
+                  <TagInput
+                    tags={values.keywords}
+                    onChange={(keywords) => setFieldValue('keywords', keywords)}
+                    placeholder="Add keywords..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tags
+                  </label>
+                  <TagInput
+                    tags={values.tags}
+                    onChange={(tags) => setFieldValue('tags', tags)}
+                    placeholder="Add tags..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-4 pt-6 border-t">
+                <button
+                  type="button"
+                  onClick={() => navigate('/videos')}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || mutation.isPending}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  {isSubmitting || mutation.isPending
+                    ? (isEditing ? 'Updating...' : 'Creating...')
+                    : (isEditing ? 'Create Video' : 'Create Video')
+                  }
+                </button>
+              </div>
+            </Form>
+          )}
+        </Formik>
+      </div>
+    </div>
+  );
+};
+
+export default VideoForm;
