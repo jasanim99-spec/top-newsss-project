@@ -23,7 +23,7 @@ import { db } from '@/firebase/firestore';
 import { AdminUser } from '@/types';
 import { adminFromFirestore, adminToFirestore } from '@/utils/converters';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 const PASSWORDS_STORAGE_KEY = 'TOPNEWS_PERMANENT_USER_PASSWORDS';
 const TEAM_MEMBERS_STORAGE_KEY = 'TOPNEWS_PERMANENT_TEAM_MEMBERS';
 const DELETED_MEMBERS_STORAGE_KEY = 'TOPNEWS_DELETED_TEAM_MEMBERS';

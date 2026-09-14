@@ -23,7 +23,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
 };
 
 const LOCAL_STORAGE_KEY = 'topnews_site_settings';
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 export const settingsService = {
   /**
