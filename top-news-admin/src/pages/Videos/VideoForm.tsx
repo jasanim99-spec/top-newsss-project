@@ -20,7 +20,7 @@ const validationSchema = Yup.object({
   thumbnailUrl: Yup.string().required('Thumbnail image is required'),
   duration: Yup.number().min(1, 'Duration must be at least 1 second').required('Duration is required'),
   category: Yup.string().required('Category is required'),
-  topic: Yup.string().required('Topic is required'),
+  topic: Yup.string(),
   language: Yup.string().required('Language is required'),
   section: Yup.string().required('Section is required'),
   status: Yup.string().oneOf(['draft', 'published']).required('Status is required'),
@@ -63,44 +63,90 @@ const VideoForm: React.FC = () => {
     },
   });
 
+  const formatDateTimeLocal = (dateStr?: string) => {
+    if (!dateStr) return new Date().toISOString().slice(0, 16);
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 16);
+      return d.toISOString().slice(0, 16);
+    } catch (e) {
+      return new Date().toISOString().slice(0, 16);
+    }
+  };
+
+  const initialValues: ShortVideo = React.useMemo(() => {
+    if (existingVideo) {
+      return {
+        ...existingVideo,
+        title: existingVideo.title || '',
+        slug: existingVideo.slug || '',
+        description: existingVideo.description || '',
+        videoUrl: existingVideo.videoUrl || '',
+        thumbnailUrl: existingVideo.thumbnailUrl || '',
+        duration: typeof existingVideo.duration === 'number' ? existingVideo.duration : 60,
+        category: (existingVideo.category || 'general').toLowerCase(),
+        topic: (existingVideo.topic || 'general').toLowerCase(),
+        language: (existingVideo.language || 'en').toLowerCase(),
+        section: existingVideo.section || 'main',
+        keywords: Array.isArray(existingVideo.keywords) ? existingVideo.keywords : [],
+        tags: Array.isArray(existingVideo.tags) ? existingVideo.tags : [],
+        status: existingVideo.status || 'published',
+        publishedAt: formatDateTimeLocal(existingVideo.publishedAt),
+        sourceUrl: existingVideo.sourceUrl || ''
+      };
+    }
+    return {
+      title: '',
+      slug: '',
+      description: '',
+      videoUrl: '',
+      thumbnailUrl: '',
+      duration: 60,
+      category: 'general',
+      topic: 'general',
+      language: 'en',
+      section: 'main',
+      keywords: [],
+      tags: [],
+      status: 'published',
+      views: 0,
+      publishedAt: new Date().toISOString().slice(0, 16),
+      sourceUrl: '',
+    };
+  }, [existingVideo]);
+
   if (isEditing && isLoadingVideo) {
     return <LoadingSpinner />;
   }
 
-  const initialValues: ShortVideo = existingVideo || {
-    title: '',
-    slug: '',
-    description: '',
-    videoUrl: '',
-    thumbnailUrl: '',
-    duration: 60,
-    category: '',
-    topic: 'general',
-    language: 'en',
-    section: 'main',
-    keywords: [],
-    tags: [],
-    status: 'published',
-    views: 0,
-    publishedAt: new Date().toISOString().slice(0, 16),
-    sourceUrl: '',
-  };
-
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={() => navigate('/videos')}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-3xl font-bold text-gray-900">
-          {isEditing ? 'Edit Video' : 'Create Video'}
-        </h1>
+      {/* Header Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 text-white rounded-3xl p-6 md:p-8 shadow-xl border border-indigo-800/40 flex items-center justify-between gap-4">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex items-center gap-4">
+          <button
+            onClick={() => navigate('/videos')}
+            className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all backdrop-blur-sm border border-white/15 cursor-pointer active:scale-95"
+            title="Go back to videos list"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-3 py-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[10px] font-extrabold tracking-wider uppercase rounded-full shadow-xs">
+                SHORT CLIP STUDIO
+              </span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+              {isEditing ? 'Edit Short Video Clip' : 'Upload New Short Video'}
+            </h1>
+          </div>
+        </div>
       </div>
 
-      <div className="bg-white p-8 rounded-lg shadow-sm border">
+      <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-200/80 relative overflow-hidden">
+        <div className="h-1.5 w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-500 absolute top-0 left-0" />
         <Formik
           initialValues={initialValues}
           validationSchema={validationSchema}

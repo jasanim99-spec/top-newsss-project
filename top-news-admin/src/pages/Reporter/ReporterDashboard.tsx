@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,23 +6,30 @@ import { newsService } from '@/services/newsService';
 import { 
   FileText, 
   Clock, 
-  CheckCircle, 
+  CheckCircle2, 
   Eye, 
-  Mic, 
-  Camera, 
-  PlusCircle, 
-  Award, 
   Zap, 
-  ArrowRight,
+  Search, 
+  RotateCcw, 
+  Monitor, 
+  Coffee, 
+  Smartphone, 
+  PlusCircle, 
+  Filter, 
+  MapPin, 
   ShieldCheck,
-  AlertCircle,
-  MapPin,
-  Flame
+  Calendar,
+  Sparkles,
+  ChevronRight
 } from 'lucide-react';
 
 export const ReporterDashboard: React.FC = () => {
   const { user, admin } = useAuth();
   const authorId = admin?.uid || admin?.id || user?.uid || user?.email || '';
+
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['reporter-stats', authorId, admin?.email],
@@ -31,232 +38,296 @@ export const ReporterDashboard: React.FC = () => {
     refetchInterval: 5000,
   });
 
-  const displayName = admin?.name || user?.email?.split('@')[0] || 'Reporter';
+  const displayName = admin?.name || user?.name || user?.email?.split('@')[0] || 'Reporter';
+  const displayEmail = admin?.email || user?.email || 'reporter@topnews.com';
   const pressId = admin?.pressCardNo || `PRESS-TN-${(authorId || '000').slice(0, 6).toUpperCase()}`;
 
+  const currentHour = new Date().getHours();
+  const greeting = currentHour < 12 ? '🌅 Good Morning' : currentHour < 17 ? '☀️ Good Afternoon' : '🌙 Good Evening';
+  const motivationalMessages = [
+    "Truth in reporting changes the world. Keep bringing real stories to light!",
+    "Your dedication to journalism keeps our readers informed and empowered.",
+    "Every headline you write shapes history. Great to see you active on desk!",
+    "Excellence in journalism begins with your passion and fearless integrity.",
+  ];
+  const messageIndex = (authorId.length + new Date().getDate()) % motivationalMessages.length;
+  const todayMotivation = motivationalMessages[messageIndex];
+
+  const recentList = stats?.recent || [];
+
+  const filteredArticles = recentList.filter((art: any) => {
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      const matchTitle = art.title?.toLowerCase().includes(q);
+      const matchCategory = art.category?.toLowerCase().includes(q);
+      if (!matchTitle && !matchCategory) return false;
+    }
+    if (startDate) {
+      const artDate = new Date(art.publishedAt || art.createdAt).toISOString().slice(0, 10);
+      if (artDate < startDate) return false;
+    }
+    if (endDate) {
+      const artDate = new Date(art.publishedAt || art.createdAt).toISOString().slice(0, 10);
+      if (artDate > endDate) return false;
+    }
+    return true;
+  });
+
+  const handleClear = () => {
+    setStartDate('');
+    setEndDate('');
+    setSearchTerm('');
+  };
+
   return (
-    <div className="space-y-6">
-      {/* TOP WELCOME HERO BANNER */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#003882] via-[#0058be] to-[#1e40af] text-white p-6 sm:p-8 shadow-xl">
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/15 via-transparent to-transparent pointer-events-none"></div>
-        
-        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-8 max-w-7xl mx-auto pb-12">
+      {/* USER PROFILE HEADER BANNER - Dynamic Welcoming Greeting */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 md:p-8 shadow-xl border border-indigo-800/40 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0 border border-white/20">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="bg-amber-400 text-black font-black text-[10px] uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                ACCREDITED JOURNALIST
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-black uppercase tracking-widest text-cyan-400 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" /> {greeting}
               </span>
-              <span className="text-blue-200 text-xs font-mono">{pressId}</span>
+              <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-extrabold px-3 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
+                {admin?.role || 'Reporter'}
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Welcome, {displayName} 👋
-            </h1>
-            <p className="text-blue-100 text-xs sm:text-sm mt-1 max-w-xl flex items-center gap-2">
-              <MapPin className="w-3.5 h-3.5 text-red-300" />
-              <span>{admin?.beat || 'General Reporting'} • {admin?.city || 'Gujarat Bureau'}</span>
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">Welcome back, {displayName}!</h1>
+            <p className="text-xs text-indigo-200/90 font-medium italic mt-1">
+              ✨ "{todayMotivation}"
+            </p>
+            <p className="text-xs text-slate-400 flex flex-wrap items-center gap-2 mt-2 font-medium">
+              <span>{displayEmail}</span>
+              <span>•</span>
+              <span className="font-mono text-indigo-300 font-bold">{pressId}</span>
+              <span>•</span>
+              <span className="flex items-center gap-1 text-slate-300 font-semibold">
+                <MapPin className="w-3.5 h-3.5 text-rose-400" /> {admin?.city || 'Gujarat Bureau'}
+              </span>
             </p>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/reporter/submit"
-              className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2 transition-all active:scale-95 animate-pulse"
-            >
-              <Zap className="w-4 h-4 text-amber-300" />
-              <span>+ Send Breaking News</span>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* QUICK STATS 4 CARDS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Total Submitted */}
-        <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-blue-50 text-[#0058be] flex items-center justify-center flex-shrink-0">
-            <FileText className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Total News</p>
-            <p className="text-xl font-bold text-gray-900">{isLoading ? '...' : stats?.total || 0}</p>
-          </div>
         </div>
 
-        {/* Live Published */}
-        <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
-            <CheckCircle className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Live / Published</p>
-            <p className="text-xl font-bold text-emerald-600">{isLoading ? '...' : stats?.published || 0}</p>
-          </div>
-        </div>
-
-        {/* Pending Review */}
-        <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
-            <Clock className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">In Review</p>
-            <p className="text-xl font-bold text-amber-600">{isLoading ? '...' : stats?.pending || 0}</p>
-          </div>
-        </div>
-
-        {/* Total Views */}
-        <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
-            <Eye className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Reader Views</p>
-            <p className="text-xl font-bold text-indigo-600">{isLoading ? '...' : stats?.totalViews?.toLocaleString() || 0}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* QUICK REPORTING ACTION TILES */}
-      <div>
-        <h2 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
-          <Zap className="w-4 h-4 text-amber-500" />
-          Quick Field Reporting Tools
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* Voice News */}
+        <div className="relative z-10 flex items-center gap-3 w-full md:w-auto">
           <Link
-            to="/reporter/submit?mode=voice"
-            className="group bg-gradient-to-br from-red-50 to-orange-50 hover:from-red-100 hover:to-orange-100 p-5 rounded-2xl border border-red-200 transition-all flex flex-col justify-between shadow-sm active:scale-98"
+            to="/reporter/submit"
+            className="bg-gradient-to-r from-rose-600 via-red-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-black px-5 py-3 rounded-xl shadow-lg shadow-rose-600/25 flex items-center justify-center gap-2 transition-all active:scale-95 flex-1 md:flex-initial"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                <Mic className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-bold bg-red-600 text-white px-2 py-0.5 rounded-full uppercase">Fast</span>
-            </div>
-            <div>
-              <h3 className="font-bold text-sm text-gray-900">🎙️ Voice Dictation Report</h3>
-              <p className="text-xs text-gray-600 mt-1">Dictate your news report using voice input.</p>
-            </div>
+            <PlusCircle className="w-4.5 h-4.5 text-white" />
+            <span>+ Submit New Article</span>
           </Link>
-
-          {/* Camera Upload */}
-          <Link
-            to="/reporter/submit?mode=camera"
-            className="group bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 p-5 rounded-2xl border border-blue-200 transition-all flex flex-col justify-between shadow-sm active:scale-98"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-[#0058be] text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                <Camera className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-bold bg-[#0058be] text-white px-2 py-0.5 rounded-full uppercase">Ground</span>
-            </div>
-            <div>
-              <h3 className="font-bold text-sm text-gray-900">📸 Camera / Media Upload</h3>
-              <p className="text-xs text-gray-600 mt-1">Capture photos/videos directly from ground zero.</p>
-            </div>
-          </Link>
-
-          {/* Digital Press Card */}
           <Link
             to="/reporter/press-card"
-            className="group bg-gradient-to-br from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 p-5 rounded-2xl border border-amber-200 transition-all flex flex-col justify-between shadow-sm active:scale-98"
+            className="bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm text-xs font-bold px-4 py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                <Award className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-bold bg-amber-600 text-white px-2 py-0.5 rounded-full uppercase">Accredited</span>
-            </div>
-            <div>
-              <h3 className="font-bold text-sm text-gray-900">💳 Digital Press ID Card</h3>
-              <p className="text-xs text-gray-600 mt-1">View and print official digital Press Card.</p>
-            </div>
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>Digital ID</span>
           </Link>
         </div>
       </div>
 
-      {/* RECENT SUBMISSIONS FEED */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-          <div>
-            <h3 className="font-bold text-sm text-gray-900">Recent Submissions (My Submissions)</h3>
-            <p className="text-xs text-gray-500">Status of news articles submitted by you</p>
+      {/* 1. FIND IN REPORT (FILTER BAR) */}
+      <div className="rounded-3xl overflow-hidden shadow-sm border border-slate-200/80 bg-white">
+        <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white px-6 py-3.5 font-bold text-xs sm:text-sm flex items-center gap-2 border-b border-indigo-800/40">
+          <Filter className="w-4 h-4 text-amber-400" />
+          <span className="font-black">Find in Report</span>
+        </div>
+        <div className="p-5 flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+            <span className="text-xs font-bold text-slate-500 hidden sm:inline">Search:</span>
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-indigo-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search title, category..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:outline-none font-semibold bg-slate-50/50"
+              />
+            </div>
           </div>
-          <Link
-            to="/reporter/articles"
-            className="text-xs font-bold text-[#0058be] hover:underline flex items-center gap-1"
-          >
-            <span>View All</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-500">Start Date:</span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:outline-none font-semibold bg-slate-50/50"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-500">End Date:</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:outline-none font-semibold bg-slate-50/50"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {}}
+              className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-indigo-500/20 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Search</span>
+            </button>
+
+            <button
+              onClick={handleClear}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-200 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+              <span>Clear</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. SUMMARY STAT CARDS - Ultra Modern Bento Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {/* PUBLISHED NEWS CARD */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 to-indigo-600 absolute top-0 left-0" />
+          <div className="flex items-center justify-between">
+            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-110 transition-transform">
+              <Monitor className="w-6 h-6" />
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200/60 px-3 py-1 rounded-full">
+              Published
+            </span>
+          </div>
+          <div className="mt-5">
+            <p className="text-3xl font-black text-slate-900 tracking-tight">{isLoading ? '...' : stats?.published || 0}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1.5">Total Published News</p>
+          </div>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-8 text-xs text-gray-400">Loading submissions...</div>
-        ) : !stats?.recent || stats.recent.length === 0 ? (
-          <div className="text-center py-10">
-            <FileText className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-xs font-bold text-gray-600">No news articles submitted yet.</p>
-            <p className="text-[11px] text-gray-400 mt-0.5">Click the button below to submit a new report.</p>
-            <Link
-              to="/reporter/submit"
-              className="inline-flex items-center gap-1.5 mt-3 bg-[#0058be] text-white px-4 py-2 rounded-xl text-xs font-bold shadow"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              Write New Report
-            </Link>
+        {/* PENDING REVIEWS CARD */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 to-orange-600 absolute top-0 left-0" />
+          <div className="flex items-center justify-between">
+            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-lg shadow-amber-500/25 group-hover:scale-110 transition-transform">
+              <Coffee className="w-6 h-6" />
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200/60 px-3 py-1 rounded-full">
+              In Review
+            </span>
           </div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {stats.recent.map((art) => {
-              const statusBadge = {
-                published: { label: 'Live / Approved', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-                pending: { label: 'Pending Review', bg: 'bg-amber-50 text-amber-700 border-amber-200' },
-                draft: { label: 'Draft / Revision', bg: 'bg-gray-100 text-gray-700 border-gray-200' },
-                rejected: { label: 'Revision Needed', bg: 'bg-red-50 text-red-700 border-red-200' },
-              }[art.status || 'pending'];
-
-              return (
-                <div key={art.id || art._id} className="py-3 flex items-center justify-between gap-3 hover:bg-slate-50 rounded-xl px-2 transition-colors">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {art.imageUrl && (
-                      <img
-                        src={art.imageUrl}
-                        alt=""
-                        className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-gray-100 border border-gray-200"
-                        onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                      />
-                    )}
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-gray-900 truncate max-w-md">{art.title}</h4>
-                      <div className="flex items-center gap-2 text-[10px] text-gray-500 mt-1">
-                        <span className="capitalize font-medium text-[#0058be]">{art.category}</span>
-                        <span>•</span>
-                        <span>{new Date(art.publishedAt || art.createdAt || '').toLocaleDateString('en-GB')}</span>
-                        {art.views !== undefined && (
-                          <>
-                            <span>•</span>
-                            <span className="flex items-center gap-0.5 text-gray-600 font-semibold">
-                              <Eye className="w-3 h-3 text-gray-400" /> {art.views}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusBadge?.bg}`}>
-                      {statusBadge?.label}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="mt-5">
+            <p className="text-3xl font-black text-slate-900 tracking-tight">{isLoading ? '...' : stats?.pending || 0}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1.5">Pending Editor Reviews</p>
           </div>
-        )}
+        </div>
+
+        {/* READER VIEWS CARD */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-cyan-500 to-blue-600 absolute top-0 left-0" />
+          <div className="flex items-center justify-between">
+            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center shadow-lg shadow-cyan-500/25 group-hover:scale-110 transition-transform">
+              <Smartphone className="w-6 h-6" />
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-cyan-700 bg-cyan-50 border border-cyan-200/60 px-3 py-1 rounded-full">
+              Total Reach
+            </span>
+          </div>
+          <div className="mt-5">
+            <p className="text-3xl font-black text-slate-900 tracking-tight">{isLoading ? '...' : (stats?.totalViews || 0).toLocaleString()}</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1.5">Total Reader Views</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. REPORT TABLE CONTAINER */}
+      <div className="rounded-3xl overflow-hidden shadow-sm border border-slate-200/80 bg-white relative">
+        <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 absolute top-0 left-0" />
+        <div className="bg-slate-900 text-white px-6 py-4 font-bold text-sm flex items-center justify-between pt-5">
+          <div className="flex items-center gap-2.5">
+            <FileText className="w-5 h-5 text-indigo-400" />
+            <h3 className="font-black text-sm sm:text-base tracking-tight">My Submitted News Report</h3>
+          </div>
+          <div className="bg-white/10 text-indigo-200 border border-white/15 px-3 py-1 rounded-full text-xs font-mono font-bold">
+            Showing {filteredArticles.length} entries
+          </div>
+        </div>
+
+        <div className="p-0 overflow-x-auto">
+          {isLoading ? (
+            <div className="text-center py-16 text-slate-400 text-xs font-semibold">
+              <div className="w-6 h-6 border-2 border-slate-300 border-t-indigo-600 rounded-full animate-spin mx-auto mb-2"></div>
+              Loading report data...
+            </div>
+          ) : filteredArticles.length === 0 ? (
+            <div className="text-center py-16 text-slate-400 text-xs font-semibold">
+              No news records found for selected filter.
+            </div>
+          ) : (
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                  <th className="py-3.5 px-5">Date</th>
+                  <th className="py-3.5 px-5">Article Title</th>
+                  <th className="py-3.5 px-5">Category</th>
+                  <th className="py-3.5 px-5">Status</th>
+                  <th className="py-3.5 px-5 text-center">Views</th>
+                  <th className="py-3.5 px-5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {filteredArticles.map((art: any) => {
+                  const statusBadge = {
+                    published: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    pending: 'bg-amber-50 text-amber-700 border-amber-200',
+                    draft: 'bg-slate-100 text-slate-700 border-slate-200',
+                    rejected: 'bg-rose-50 text-rose-700 border-rose-200',
+                  }[art.status || 'pending'];
+
+                  const dateStr = art.publishedAt || art.createdAt 
+                    ? new Date(art.publishedAt || art.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                    : 'N/A';
+
+                  return (
+                    <tr key={art.id || art._id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-4 px-5 font-semibold text-slate-700 whitespace-nowrap">{dateStr}</td>
+                      <td className="py-4 px-5 font-extrabold text-slate-900 max-w-xs truncate">
+                        {art.title}
+                      </td>
+                      <td className="py-4 px-5 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/60 uppercase text-[10px]">
+                          {art.category}
+                        </span>
+                      </td>
+                      <td className="py-4 px-5 whitespace-nowrap">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border tracking-wider ${statusBadge}`}>
+                          {art.status || 'pending'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-5 text-center font-mono font-extrabold text-slate-800">
+                        {art.views || 0}
+                      </td>
+                      <td className="py-4 px-5 text-right whitespace-nowrap">
+                        <Link
+                          to={`/news/${art.id || art._id}/edit`}
+                          className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 px-3 py-1.5 rounded-xl font-bold transition-all active:scale-95 inline-block"
+                        >
+                          Edit
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </div>
   );

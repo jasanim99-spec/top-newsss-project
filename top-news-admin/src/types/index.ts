@@ -111,15 +111,7 @@ export const LANGUAGE_OPTIONS: LanguageOption[] = [
   { code: "en", name: "English" },
   { code: "hi", name: "Hindi" },
   { code: "gu", name: "Gujarati" },
-  { code: "bn", name: "Bengali" },
-  { code: "ta", name: "Tamil" },
-  { code: "te", name: "Telugu" },
-  { code: "ml", name: "Malayalam" },
-  { code: "mr", name: "Marathi" },
   { code: "pa", name: "Punjabi" },
-  { code: "ur", name: "Urdu" },
-  { code: "es", name: "Spanish" },
-  { code: "ar", name: "Arabic" },
   { code: "zh", name: "Chinese" },
   { code: "ru", name: "Russian" }
 ];

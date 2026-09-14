@@ -121,23 +121,29 @@ export const safeFormatDistanceToNow = (dateVal: any): string => {
 };
 
 export const isLanguageMatch = (lang1?: string, lang2?: string): boolean => {
-  if (!lang1 || !lang2) return true;
+  if (!lang1 || !lang2) return false;
   const l1 = lang1.toLowerCase().trim();
   const l2 = lang2.toLowerCase().trim();
-  if (l1 === 'all' || l2 === 'all' || l1 === '' || l2 === '' || l1 === '*' || l2 === '*') return true;
+  if (l1 === 'all' || l2 === 'all' || l1 === '*' || l2 === '*') return true;
   if (l1 === l2) return true;
-  if ((l1 === 'en' && l2 === 'english') || (l1 === 'english' && l2 === 'en')) return true;
-  if ((l1 === 'hi' && l2 === 'hindi') || (l1 === 'hindi' && l2 === 'hi')) return true;
-  if ((l1 === 'gu' && l2 === 'gujarati') || (l1 === 'gujarati' && l2 === 'gu')) return true;
-  if ((l1 === 'bn' && l2 === 'bengali') || (l1 === 'bengali' && l2 === 'bn')) return true;
-  if ((l1 === 'mr' && l2 === 'marathi') || (l1 === 'marathi' && l2 === 'mr')) return true;
-  if ((l1 === 'ta' && l2 === 'tamil') || (l1 === 'tamil' && l2 === 'ta')) return true;
-  if ((l1 === 'te' && l2 === 'telugu') || (l1 === 'telugu' && l2 === 'te')) return true;
-  if ((l1 === 'kn' && l2 === 'kannada') || (l1 === 'kannada' && l2 === 'kn')) return true;
-  if ((l1 === 'ml' && l2 === 'malayalam') || (l1 === 'malayalam' && l2 === 'ml')) return true;
-  if ((l1 === 'pa' && l2 === 'punjabi') || (l1 === 'punjabi' && l2 === 'pa')) return true;
-  if ((l1 === 'ur' && l2 === 'urdu') || (l1 === 'urdu' && l2 === 'ur')) return true;
-  return false;
+
+  const mapCode = (c: string) => {
+    if (c === 'english') return 'en';
+    if (c === 'gujarati') return 'gu';
+    if (c === 'hindi') return 'hi';
+    if (c === 'bengali') return 'bn';
+    if (c === 'marathi') return 'mr';
+    if (c === 'tamil') return 'ta';
+    if (c === 'telugu') return 'te';
+    if (c === 'kannada') return 'kn';
+    if (c === 'malayalam') return 'ml';
+    if (c === 'punjabi') return 'pa';
+    if (c === 'urdu') return 'ur';
+    if (c === 'chinese' || c === 'zh-cn' || c === 'zh-tw' || c === '中文') return 'zh';
+    return c;
+  };
+
+  return mapCode(l1) === mapCode(l2);
 };
 
 export const newsFromFirestore = (docSnap: QueryDocumentSnapshot<DocumentData> | DocumentData, id: string): NewsArticle => {

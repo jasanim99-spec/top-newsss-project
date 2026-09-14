@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { NewsCard } from '@/components/news/NewsCard';
 import { Button } from '@/components/ui/button';
-import { newsAPI } from '@/services/api';
+import { newsService } from '@/services/newsService';
 import { useNewsStore } from '@/store/newsStore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useRef } from 'react';
@@ -17,8 +17,15 @@ export function FeaturedSection() {
 
   const { data: newsData, isLoading } = useQuery({
     queryKey: ['featured-carousel', currentLanguage],
-    queryFn: () => newsAPI.getFeaturedNews(currentLanguage),
-    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      let res = await newsService.getPublishedNews({ section: 'featured', language: currentLanguage, limitNum: 10 });
+      if (!res.articles || res.articles.length < 2) {
+        res = await newsService.getPublishedNews({ language: currentLanguage, limitNum: 10 });
+      }
+      return res;
+    },
+    staleTime: 0,
+    refetchInterval: 3000,
   });
 
   useEffect(() => {
@@ -131,26 +138,26 @@ export function FeaturedSection() {
         </div>
 
         <div
-  ref={scrollContainerRef}
-  className="flex space-x-6 overflow-x-auto scrollbar-hide pb-4"
-  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
->
-  {featuredArticles.map((article, index) => (
-    <motion.div
-      key={article._id}
-      initial={{ opacity: 0, x: 50 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="flex-shrink-0 w-[calc(25%-18px)] min-w-[280px]"
-    >
-      <NewsCard
-        article={article}
-        showDescription={true}
-      />
-    </motion.div>
-  ))}
-</div>
+          ref={scrollContainerRef}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch"
+        >
+          {featuredArticles.slice(0, 4).map((article, index) => (
+            <motion.div
+              key={article._id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              className="w-full flex flex-col h-full"
+            >
+              <NewsCard
+                article={article}
+                showDescription={true}
+                className="h-full flex-1"
+              />
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );

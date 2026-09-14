@@ -16,11 +16,6 @@ export const DigitalPressCard: React.FC<DigitalPressCardProps> = ({ user, onClos
     : '01/01/2026';
 
   const issueDate = memberSince;
-  const expiryDate = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
 
   const photo = user.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'Reporter')}&background=0c2340&color=fff&size=256&bold=true`;
 
@@ -161,10 +156,6 @@ export const DigitalPressCard: React.FC<DigitalPressCardProps> = ({ user, onClos
                       <span className="font-mono font-bold text-white">{memberSince}</span>
                     </p>
                     <p className="flex items-center gap-1">
-                      <span className="text-slate-400">Expires:</span> 
-                      <span className="font-mono font-bold text-amber-300">{expiryDate}</span>
-                    </p>
-                    <p className="flex items-center gap-1">
                       <span className="text-slate-400">Press ID:</span> 
                       <span className="font-mono font-bold text-sky-300">{pressId}</span>
                     </p>
@@ -237,10 +228,6 @@ export const DigitalPressCard: React.FC<DigitalPressCardProps> = ({ user, onClos
                     <div className="flex justify-between">
                       <span className="text-slate-400">Issued Date:</span>
                       <span className="font-bold text-white">{issueDate}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Expiry Date:</span>
-                      <span className="font-bold text-amber-300">{expiryDate}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Emp / City ID:</span>

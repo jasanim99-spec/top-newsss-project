@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { initSocketClient } from './services/socketService';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
@@ -15,6 +16,8 @@ import Login from './pages/Login';
 import AccessDenied from './pages/AccessDenied';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import AdsList from './pages/Ads/AdsList';
+import PushNotify from './pages/Notifications/PushNotify';
 
 // Reporter Module Pages
 import ReporterLayout from './pages/Reporter/ReporterLayout';
@@ -22,6 +25,8 @@ import ReporterDashboard from './pages/Reporter/ReporterDashboard';
 import SubmitNews from './pages/Reporter/SubmitNews';
 import MyArticles from './pages/Reporter/MyArticles';
 import PressCardPage from './pages/Reporter/PressCardPage';
+import LeaveManagement from './pages/Reporter/LeaveManagement';
+import ReporterGoals from './pages/Reporter/ReporterGoals';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +38,10 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  useEffect(() => {
+    initSocketClient();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -48,7 +57,9 @@ function App() {
                 <Route path="dashboard" element={<ReporterDashboard />} />
                 <Route path="submit" element={<SubmitNews />} />
                 <Route path="articles" element={<MyArticles />} />
+                <Route path="goals" element={<ReporterGoals />} />
                 <Route path="press-card" element={<PressCardPage />} />
+                <Route path="leaves" element={<LeaveManagement />} />
               </Route>
             </Route>
 
@@ -60,6 +71,8 @@ function App() {
                 {/* News & Editorial Review Routes */}
                 <Route path="news/reviews" element={<PendingReviews />} />
                 <Route path="news" element={<NewsList />} />
+                <Route path="leaves" element={<LeaveManagement />} />
+                <Route path="ads" element={<AdsList />} />
                 <Route path="news/create" element={<NewsForm />} />
                 <Route path="news/:id/edit" element={<NewsForm />} />
                 <Route path="news/:id/view" element={<NewsDetail />} />
@@ -74,6 +87,9 @@ function App() {
 
                 {/* Settings Route */}
                 <Route path="settings" element={<Settings />} />
+
+                {/* Push Notifications */}
+                <Route path="notifications" element={<PushNotify />} />
               </Route>
             </Route>
 

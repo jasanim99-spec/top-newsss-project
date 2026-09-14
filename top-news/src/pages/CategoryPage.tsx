@@ -64,6 +64,11 @@ export default function CategoryPage() {
     };
 
     fetchCategoryData();
+
+    window.addEventListener('topnews_realtime_refetch', fetchCategoryData);
+    return () => {
+      window.removeEventListener('topnews_realtime_refetch', fetchCategoryData);
+    };
   }, [category, currentLanguage, sortBy, currentPage]);
 
   const handleSortChange = (newSort: string) => {
@@ -130,8 +135,8 @@ export default function CategoryPage() {
       <div className="min-h-screen bg-background">
         <Header />
         
-        <main>
-          <div className="news-container py-8">
+        <main className="pt-3 lg:pt-4">
+          <div className="news-container pb-8">
             {/* Page Header */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}

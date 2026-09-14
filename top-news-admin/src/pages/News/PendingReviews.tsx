@@ -17,18 +17,26 @@ import {
   AlertCircle,
   ExternalLink,
   Sparkles,
-  Search
+  Search,
+  Check,
+  X,
+  UserCheck
 } from 'lucide-react';
 import LoadingSpinner from '@/components/Common/LoadingSpinner';
 import toast from 'react-hot-toast';
+
+const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 export const PendingReviews: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'news' | 'leaves'>('news');
   const [feedbackModalArticle, setFeedbackModalArticle] = useState<NewsArticle | null>(null);
   const [feedbackNote, setFeedbackNote] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  // News Submissions Query
   const { data, isLoading } = useQuery({
     queryKey: ['pending-news-reviews', searchTerm],
     queryFn: () => newsService.getNews({
@@ -42,7 +50,39 @@ export const PendingReviews: React.FC = () => {
 
   const articles = data?.articles || [];
 
-  // Approve Mutation
+  // Reporter Leaves Query
+  const { data: leavesData } = useQuery({
+    queryKey: ['pending-reporter-leaves'],
+    queryFn: () => fetch(`${API}/leaves?status=all`).then(r => r.json()),
+    refetchInterval: 3000,
+  });
+
+  const leavesList = leavesData?.leaves || [];
+  const pendingLeaves = leavesList.filter((l: any) => l.status === 'pending');
+
+  // Leave Status Change Mutation
+  const leaveStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const res = await fetch(`${API}/leaves/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Status update failed');
+      return json;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['pending-reporter-leaves'] });
+      queryClient.invalidateQueries({ queryKey: ['leaves'] });
+      toast.success(`🎉 Leave request ${variables.status} successfully!`);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Failed to update leave status');
+    }
+  });
+
+  // Approve News Mutation
   const approveMutation = useMutation({
     mutationFn: async (id: string) => {
       return newsService.approveNews(id);
@@ -58,15 +98,32 @@ export const PendingReviews: React.FC = () => {
     }
   });
 
-  // Revision / Reject Mutation
-  const revisionMutation = useMutation({
-    mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
-      return newsService.requestRevision(id, notes);
+  // Bulk Approve
+  const bulkApproveMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      return Promise.all(ids.map(id => newsService.approveNews(id)));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-news-reviews'] });
       queryClient.invalidateQueries({ queryKey: ['news'] });
-      toast.success('💬 Revision request sent to reporter.');
+      queryClient.invalidateQueries({ queryKey: ['news-stats'] });
+      setSelectedIds([]);
+      toast.success('🎉 Selected articles published live successfully!');
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Failed bulk approve.');
+    }
+  });
+
+  // Reject Mutation
+  const rejectMutation = useMutation({
+    mutationFn: async ({ id, feedback }: { id: string; feedback: string }) => {
+      return newsService.rejectNews(id, feedback);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pending-news-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['news'] });
+      toast.success('Revision note sent to reporter.');
       setFeedbackModalArticle(null);
       setFeedbackNote('');
     },
@@ -75,216 +132,167 @@ export const PendingReviews: React.FC = () => {
     }
   });
 
+  const allSelected = articles.length > 0 && selectedIds.length === articles.length;
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(articles.map(a => a._id || a.id || ''));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
   return (
-    <div className="space-y-6">
-      {/* TOP HEADER */}
-      <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+      {/* VIBRANT TOP HEADER */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 rounded-3xl shadow-xl border border-indigo-800/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 space-y-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-black text-gray-900">Editorial Review Desk (Pending Submissions)</h1>
-            <span className="bg-amber-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">
-              {articles.length} Pending
+            <span className="px-2.5 py-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-extrabold tracking-wider uppercase rounded-full shadow-sm">
+              EDITORIAL CONTROL
             </span>
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Review fresh submissions from field reporters and publish them in 1-click.
+          <h1 className="text-2xl font-black text-white tracking-tight">Editorial Review & Approval Desk</h1>
+          <p className="text-slate-300 text-xs sm:text-sm font-medium">
+            Review field reporter news submissions and publish live with 1-click workflow.
           </p>
         </div>
 
-        {/* Search */}
-        <div className="relative w-full sm:w-64">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search news or reporter name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full text-xs font-semibold bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0058be]"
-          />
+        {/* Pending Counter Badge */}
+        <div className="relative z-10 flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/15 shrink-0 text-white font-bold text-xs">
+          <Clock className="w-4 h-4 text-amber-400" />
+          <span>Pending Submissions ({articles.length})</span>
         </div>
       </div>
 
-      {/* PENDING SUBMISSIONS LIST */}
-      {isLoading ? (
-        <LoadingSpinner />
-      ) : articles.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl border border-gray-200 text-center shadow-sm">
-          <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-gray-800">All news articles reviewed!</h3>
-          <p className="text-xs text-gray-400 mt-1">There are currently no pending submissions.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {articles.map((art) => (
-            <div
-              key={art.id || art._id}
-              className="bg-white rounded-2xl border-2 border-amber-200/80 p-5 shadow-sm hover:shadow-md transition-shadow space-y-4"
-            >
-              {/* TOP REPORTER BADGE & TIMESTAMP */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#0058be] text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                    {(art.authorName || 'R').charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-xs text-gray-900">{art.authorName || 'Field Reporter'}</span>
-                      <span className="bg-amber-100 text-amber-900 text-[9px] font-bold px-1.5 py-0.2 rounded border border-amber-300">
-                        {art.pressCardNo || 'ACCREDITED'}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-gray-500 flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-red-500" />
-                      <span>{art.authorCity || art.location?.city || 'Gujarat Bureau'}</span>
-                    </p>
-                  </div>
-                </div>
+      {/* NEWS REVIEWS CONTENT */}
+      <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3 bg-white p-4 rounded-xl border border-gray-200">
+            {articles.length > 0 && (
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 accent-red-700 cursor-pointer"
+                />
+                <span className="text-xs font-bold text-gray-700">Select All</span>
+              </label>
+            )}
 
-                <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Submitted: {new Date(art.publishedAt || art.createdAt || '').toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
-                  </span>
-                  <span className="bg-blue-50 text-[#0058be] font-bold text-[10px] px-2 py-0.5 rounded-md uppercase">
-                    {art.category}
-                  </span>
-                </div>
-              </div>
+            {selectedIds.length > 0 && (
+              <button
+                onClick={() => bulkApproveMutation.mutate(selectedIds)}
+                disabled={bulkApproveMutation.isPending}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-lg shadow flex items-center gap-2 transition-all active:scale-95"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Approve Selected ({selectedIds.length})</span>
+              </button>
+            )}
 
-              {/* ARTICLE BODY & IMAGE */}
-              <div className="flex flex-col sm:flex-row items-start gap-4">
-                {art.imageUrl && (
-                  <div className="w-full sm:w-44 h-32 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-                    <img
-                      src={art.imageUrl}
-                      alt=""
-                      className="w-full h-full object-cover"
-                      onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                    />
-                  </div>
-                )}
-
-                <div className="flex-1 min-w-0 space-y-2">
-                  <div className="flex items-center gap-2">
-                    {art.isBreaking && (
-                      <span className="bg-red-600 text-white font-black text-[9px] px-2 py-0.5 rounded uppercase tracking-wider animate-pulse">
-                        🔴 BREAKING
-                      </span>
-                    )}
-                    <h3 className="text-base font-extrabold text-gray-900 leading-snug">
-                      {art.title}
-                    </h3>
-                  </div>
-
-                  <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {art.description}
-                  </p>
-
-                  {/* AI Summary preview if available */}
-                  {art.aiSummary && (
-                    <div className="bg-purple-50 p-2 rounded-lg text-xs text-purple-900 border border-purple-200">
-                      <span className="font-bold flex items-center gap-1 text-purple-800 text-[10px]">
-                        <Sparkles className="w-3 h-3 text-purple-600" /> AI Key Bullets:
-                      </span>
-                      <pre className="font-sans text-[11px] whitespace-pre-wrap mt-0.5">{art.aiSummary}</pre>
-                    </div>
-                  )}
-
-                  {/* Location & Tags */}
-                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    {art.location?.city && (
-                      <span className="bg-gray-100 text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
-                        <MapPin className="w-2.5 h-2.5 text-red-500" />
-                        {art.location.city} {art.location.district ? `(${art.location.district})` : ''}
-                      </span>
-                    )}
-                    {art.tags?.map((t) => (
-                      <span key={t} className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded">
-                        #{t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* ACTIONS BAR */}
-              <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Link
-                    to={`/news/${art.id || art._id}/edit`}
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                    <span>Edit & Refine</span>
-                  </Link>
-
-                  <button
-                    onClick={() => setFeedbackModalArticle(art)}
-                    className="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    <span>Request Revision</span>
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => approveMutation.mutate(art.id || art._id || '')}
-                  disabled={approveMutation.isPending}
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  <span>{approveMutation.isPending ? 'Approving...' : '✅ Approve & Publish'}</span>
-                </button>
-              </div>
+            <div className="relative flex-1 max-w-xs ml-auto">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search pending news..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+              />
             </div>
-          ))}
+          </div>
+
+          {isLoading ? (
+            <LoadingSpinner />
+          ) : articles.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+              <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-2" />
+              <h3 className="text-base font-bold text-gray-800">No Pending News Submissions!</h3>
+              <p className="text-xs text-gray-500 mt-1">All news articles have been reviewed and published.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {articles.map((art: NewsArticle) => (
+                <div key={art._id || art.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row items-start justify-between gap-4 hover:border-red-300 transition-colors">
+                  <div className="flex items-start gap-4 min-w-0 flex-1">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(art._id || art.id || '')}
+                      onChange={() => toggleSelect(art._id || art.id || '')}
+                      className="mt-1 w-4 h-4 accent-red-700 cursor-pointer"
+                    />
+
+                    {art.imageUrl && (
+                      <img
+                        src={art.imageUrl}
+                        alt=""
+                        className="w-20 h-20 rounded-xl object-cover border border-gray-200 flex-shrink-0"
+                        onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                      />
+                    )}
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="bg-blue-100 text-blue-800 text-[10px] font-extrabold px-2 py-0.5 rounded uppercase">
+                          {art.category}
+                        </span>
+                        <span className="text-xs text-gray-500 font-medium">• {art.authorName || 'Reporter'}</span>
+                      </div>
+                      <h3 className="text-sm font-bold text-gray-900 leading-snug">{art.title}</h3>
+                      <p className="text-xs text-gray-600 line-clamp-2 mt-1">{art.description}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto justify-end pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                    <button
+                      onClick={() => approveMutation.mutate(art._id || art.id || '')}
+                      disabled={approveMutation.isPending}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-sm flex items-center gap-1.5"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Approve Live</span>
+                    </button>
+
+                    <button
+                      onClick={() => setFeedbackModalArticle(art)}
+                      className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-sm flex items-center gap-1.5"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Revision</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
 
-      {/* FEEDBACK / REVISION MODAL */}
+      {/* REVISION MODAL */}
       {feedbackModalArticle && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-amber-600" />
-              <span>Send Revision Feedback to Reporter</span>
-            </h3>
-            <p className="text-xs text-gray-500">
-              Provide revision feedback for article <strong>"{feedbackModalArticle.title}"</strong>:
-            </p>
-
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-gray-900">Send Revision Feedback to Reporter</h3>
             <textarea
-              rows={3}
-              placeholder="e.g. Please upload a high-resolution photo and clarify the location..."
+              rows={4}
               value={feedbackNote}
               onChange={(e) => setFeedbackNote(e.target.value)}
-              className="w-full text-xs bg-slate-50 border border-gray-300 rounded-xl p-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              placeholder="Explain required changes..."
+              className="w-full p-3 text-xs border rounded-xl"
             />
-
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setFeedbackModalArticle(null)} className="px-4 py-2 text-xs font-bold">Cancel</button>
               <button
-                type="button"
-                onClick={() => setFeedbackModalArticle(null)}
-                className="px-4 py-2 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-100"
+                onClick={() => rejectMutation.mutate({ id: feedbackModalArticle._id || feedbackModalArticle.id || '', feedback: feedbackNote })}
+                className="bg-amber-600 text-white font-bold text-xs px-4 py-2 rounded-xl"
               >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!feedbackNote.trim()) {
-                    toast.error('Please enter revision feedback notes.');
-                    return;
-                  }
-                  revisionMutation.mutate({
-                    id: feedbackModalArticle.id || feedbackModalArticle._id || '',
-                    notes: feedbackNote.trim()
-                  });
-                }}
-                disabled={revisionMutation.isPending}
-                className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow transition-all"
-              >
-                {revisionMutation.isPending ? 'Sending...' : 'Send Revision Note'}
+                Send Feedback
               </button>
             </div>
           </div>
@@ -295,4 +303,3 @@ export const PendingReviews: React.FC = () => {
 };
 
 export default PendingReviews;
-

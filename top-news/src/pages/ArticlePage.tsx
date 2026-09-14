@@ -15,7 +15,8 @@ import { safeFormatDistanceToNow } from "@/utils/converters"
 import ReactMarkdown from "react-markdown"
 
 export default function ArticlePage() {
-  const { language, category, topic, slug } = useParams()
+  const params = useParams()
+  const slug = params.slug || params.id || Object.values(params).filter(Boolean).pop()
   const navigate = useNavigate()
   const [article, setArticle] = useState<NewsArticle | null>(null)
   const [loading, setLoading] = useState(true)
@@ -65,7 +66,7 @@ export default function ArticlePage() {
     }
 
     fetchArticle()
-  }, [language, category, topic, slug])
+  }, [slug])
 
   if (loading) {
     return (
@@ -163,8 +164,8 @@ export default function ArticlePage() {
       <div className="min-h-screen bg-background">
         <Header />
 
-        <main>
-          <article className="news-container py-8">
+        <main className="pt-3 lg:pt-4">
+          <article className="news-container pb-8">
             {/* Back Button */}
             <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
               <ArrowLeft className="h-4 w-4 mr-2" />

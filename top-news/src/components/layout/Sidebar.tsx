@@ -1,28 +1,51 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { TrendingUp, Eye, Mail, Cloud, ExternalLink } from 'lucide-react';
+import { TrendingUp, Eye, Mail, Cloud, ExternalLink, Bell, BellOff } from 'lucide-react';
 import { NewsCard } from '@/components/news/NewsCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { newsAPI } from '@/services/api';
+import { newsService } from '@/services/newsService';
 import { useNewsStore } from '@/store/newsStore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePushNotification } from '@/hooks/usePushNotification';
+import { AdSubmissionModal } from '@/components/ads/AdSubmissionModal';
 
 export function Sidebar() {
+  const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const { currentLanguage, trendingArticles, setTrendingArticles } = useNewsStore();
 
   const { data: trendingData, isLoading } = useQuery({
     queryKey: ['trending-sidebar', currentLanguage],
-    queryFn: () => newsAPI.getTrendingNews(currentLanguage),
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    queryFn: async () => {
+      let res = await newsService.getPublishedNews({ section: 'sidebar', language: currentLanguage, limitNum: 8 });
+      if (!res.articles || res.articles.length === 0) {
+        res = await newsService.getPublishedNews({ language: currentLanguage, limitNum: 8 });
+      }
+      return res;
+    },
+    staleTime: 10 * 60 * 1000,
   });
 
   const { data: mostReadData, isLoading: isMostReadLoading } = useQuery({
     queryKey: ['most-read-sidebar', currentLanguage],
-    queryFn: () => newsAPI.getTrendingNewsMostRead(currentLanguage),
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    queryFn: async () => {
+      let res = await newsService.getPublishedNews({ language: currentLanguage, limitNum: 8 });
+      return res;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+  const { supported, subscribed, loading: notifLoading, subscribe, unsubscribe } = usePushNotification();
+
+  const { data: sidebarAds } = useQuery({
+    queryKey: ['sidebar-ads'],
+    queryFn: () => fetch(`${API}/ads?position=sidebar&active=true`).then(r => r.json()),
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -79,85 +102,75 @@ export function Sidebar() {
         )}
       </motion.div>
 
-      {/* Most Read This Week */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.2 }}
-        className="news-card p-6"
-      >
-        <div className="flex items-center space-x-2 mb-4">
-          <Eye className="h-5 w-5 text-secondary" />
-          <h3 className="text-lg font-semibold">Most Read This Week</h3>
-        </div>
-        
-        {isMostReadLoading ? (
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-start space-x-3">
-                <Skeleton className="w-6 h-6 rounded-full" />
-                <Skeleton className="h-4 flex-1" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {(mostReadData?.articles ?? []).slice(0, 5).map((article, index) => (
-              <motion.div
-                key={article._id}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="flex items-start space-x-3 group cursor-pointer"
-              >
-                <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
-                  {index + 1}
-                </div>
-                <a 
-                  href={`/article/${article.language}/${article.category}/${article.topic}/${article.slug}`}
-                  className="text-sm leading-tight group-hover:text-primary transition-colors line-clamp-2"
-                >
-                  {article.title}
-                </a>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </motion.div>
 
-      {/* Newsletter Signup */}
+
+      {/* Sidebar Advertisement / Sponsored Banner (Controlled via Admin Panel /ads) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.4 }}
-        className="news-card p-6 bg-gradient-to-br from-primary/5 to-secondary/5"
+        className="news-card p-6 bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 text-white rounded-3xl border border-indigo-700/40 shadow-lg relative overflow-hidden group"
       >
-        <div className="flex items-center space-x-2 mb-4">
-          <Mail className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Newsletter</h3>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-full shadow-xs">
+            SPONSORED
+          </span>
+          <span className="text-[10px] text-indigo-300 font-semibold uppercase tracking-wider">
+            ADVERTISEMENT
+          </span>
         </div>
-        
-        <p className="text-sm text-muted-foreground mb-4">
-          Get the latest news delivered directly to your inbox every morning.
-        </p>
-        
-        <form className="space-y-3">
-          <Input
-            type="email"
-            placeholder="Enter your email"
-            className="w-full"
-          />
-          <Button type="submit" className="w-full">
-            Subscribe
-          </Button>
-        </form>
-        
-        <p className="text-xs text-muted-foreground mt-3">
-          By subscribing, you agree to our Privacy Policy and Terms of Service.
-        </p>
+
+        {sidebarAds?.ads && sidebarAds.ads.length > 0 ? (
+          (() => {
+            const activeAd = sidebarAds.ads[0];
+            return (
+              <a
+                href={activeAd.link_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => fetch(`${API}/ads/${activeAd.id}/click`, { method: 'POST' }).catch(() => {})}
+                className="block group/ad"
+              >
+                {activeAd.image_url && (
+                  <div className="aspect-[16/10] w-full rounded-2xl overflow-hidden bg-slate-950 mb-3 border border-white/10 relative">
+                    <img
+                      src={activeAd.image_url}
+                      alt={activeAd.title}
+                      className="w-full h-full object-cover group-hover/ad:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                )}
+                <h4 className="text-base font-black text-white group-hover/ad:text-cyan-300 transition-colors leading-snug mb-2">
+                  {activeAd.title}
+                </h4>
+                <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-extrabold text-xs py-2.5 rounded-xl shadow-md flex items-center justify-center gap-1.5 mt-2">
+                  <span>Visit Advertiser</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Button>
+              </a>
+            );
+          })()
+        ) : (
+          <div className="text-center py-2 space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-800/40 border border-indigo-600/30 flex items-center justify-center mx-auto text-cyan-400 text-xl font-black">
+              📢
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-white tracking-tight">Advertise With Top News</h4>
+              <p className="text-xs text-indigo-200 mt-1 leading-relaxed">
+                Reach over 100,000+ daily readers. Manage campaigns from Admin Panel.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsAdModalOpen(true)}
+              className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all gap-1.5 cursor-pointer"
+            >
+              <span>Submit Ad Campaign Request</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </motion.div>
 
       {/* Mini Weather Widget */}
@@ -201,36 +214,41 @@ export function Sidebar() {
         </div>
       </motion.div>
 
-      {/* Advertisement Slot */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.8 }}
-        className="news-card p-6 bg-gradient-to-br from-muted/50 to-muted border-dashed overflow-hidden relative group"
-      >
-        <div className="text-center space-y-4">
-          <div className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-            <span>Advertisement</span>
-            <span className="text-xs px-1.5 py-0.5 rounded bg-muted-foreground/15 text-muted-foreground font-semibold uppercase tracking-wider scale-90">Sponsored</span>
+
+
+      {/* Push Notification Subscribe */}
+      {supported && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="news-card p-5"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Bell className="h-5 w-5 text-primary" />
+            <h3 className="text-base font-semibold">Breaking News Alerts</h3>
           </div>
-          <div className="aspect-[4/3] w-full rounded-lg overflow-hidden relative bg-muted/30">
-            <img 
-              src="/premium_ad_banner.png" 
-              alt="Top News Premium Subscription Ad" 
-              className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-500"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-center p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <span className="text-white text-xs font-semibold flex items-center gap-1">
-                Go Premium <ExternalLink className="h-3.5 w-3.5" />
-              </span>
-            </div>
-          </div>
-          <Button variant="outline" size="sm" className="w-full font-medium hover:bg-primary hover:text-primary-foreground transition-all duration-300">
-            Learn More
+          <p className="text-sm text-muted-foreground mb-3">
+            Instant notifications melo jyare breaking news aave
+          </p>
+          <Button
+            onClick={subscribed ? unsubscribe : subscribe}
+            disabled={notifLoading}
+            variant={subscribed ? 'outline' : 'default'}
+            size="sm"
+            className="w-full flex items-center gap-2"
+          >
+            {subscribed ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+            {notifLoading ? 'Processing...' : subscribed ? 'Unsubscribe' : 'Enable Notifications'}
           </Button>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
+
+      {/* Ad Submission Modal */}
+      <AdSubmissionModal
+        isOpen={isAdModalOpen}
+        onClose={() => setIsAdModalOpen(false)}
+      />
     </aside>
   );
 }

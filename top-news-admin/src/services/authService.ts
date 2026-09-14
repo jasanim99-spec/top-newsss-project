@@ -23,8 +23,10 @@ import { db } from '@/firebase/firestore';
 import { AdminUser } from '@/types';
 import { adminFromFirestore, adminToFirestore } from '@/utils/converters';
 
+const API_BASE_URL = 'http://localhost:3000';
 const PASSWORDS_STORAGE_KEY = 'TOPNEWS_PERMANENT_USER_PASSWORDS';
 const TEAM_MEMBERS_STORAGE_KEY = 'TOPNEWS_PERMANENT_TEAM_MEMBERS';
+const DELETED_MEMBERS_STORAGE_KEY = 'TOPNEWS_DELETED_TEAM_MEMBERS';
 
 const loadPersistentPasswords = (): Record<string, string> => {
   const defaults: Record<string, string> = {
@@ -68,10 +70,45 @@ const loadPersistentTeamUpdates = (): Record<string, Partial<AdminUser>> => {
 const localTeamUpdates: Record<string, Partial<AdminUser>> = loadPersistentTeamUpdates();
 
 const savePersistentTeamUpdate = (uid: string, data: Partial<AdminUser>) => {
-  if (!uid) return;
-  localTeamUpdates[uid] = { ...(localTeamUpdates[uid] || {}), ...data };
+  if (!uid && !data.email) return;
+  const key = uid || (data.email || '').toLowerCase().trim();
+  localTeamUpdates[key] = { ...(localTeamUpdates[key] || {}), ...data };
+  if (data.email) {
+    const emailKey = data.email.toLowerCase().trim();
+    localTeamUpdates[emailKey] = { ...(localTeamUpdates[emailKey] || {}), ...data };
+  }
   try {
     localStorage.setItem(TEAM_MEMBERS_STORAGE_KEY, JSON.stringify(localTeamUpdates));
+  } catch (e) {}
+};
+
+const loadDeletedMemberKeys = (): string[] => {
+  try {
+    const raw = localStorage.getItem(DELETED_MEMBERS_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return [];
+};
+
+const saveDeletedMemberKey = (key: string) => {
+  if (!key) return;
+  const cleanKey = key.trim().toLowerCase();
+  const current = loadDeletedMemberKeys();
+  if (!current.includes(cleanKey)) {
+    current.push(cleanKey);
+    try {
+      localStorage.setItem(DELETED_MEMBERS_STORAGE_KEY, JSON.stringify(current));
+    } catch (e) {}
+  }
+};
+
+const removeDeletedMemberKey = (key: string) => {
+  if (!key) return;
+  const cleanKey = key.trim().toLowerCase();
+  const current = loadDeletedMemberKeys();
+  const filtered = current.filter(k => k !== cleanKey);
+  try {
+    localStorage.setItem(DELETED_MEMBERS_STORAGE_KEY, JSON.stringify(filtered));
   } catch (e) {}
 };
 
@@ -87,7 +124,7 @@ export const authService = {
       throw new Error('Please enter both Email and Password.');
     }
 
-    // 1. Fetch registered team members to verify account exists
+    // Fetch registered team members to verify account exists
     const allMembers = await this.getAllTeamMembers();
     const registeredMember = allMembers.find(
       m => (m.email || '').toLowerCase().trim() === cleanEmail
@@ -96,12 +133,10 @@ export const authService = {
     const isDefaultAdmin = cleanEmail === 'jasanim99@gmail.com' || cleanEmail === 'admin@topnews.com';
     const isDefaultReporter = cleanEmail === 'reporter@topnews.com';
 
-    // If email is NOT registered in team management and is NOT a default account and has no saved password
     if (!registeredMember && !isDefaultAdmin && !isDefaultReporter && !userPasswords[cleanEmail]) {
       throw new Error('This account is not registered. Please ask Admin to add your ID & Password.');
     }
 
-    // 2. Validate Password against assigned password
     const expectedPassword = userPasswords[cleanEmail] || (registeredMember as any)?.password;
     const isMasterKey = cleanPass.toUpperCase() === 'TOPNEWS2026';
     
@@ -117,7 +152,6 @@ export const authService = {
       const allowedReporterPasses = ['reporter123', '123456', 'reporter', '12345678', 'topnews123', 'topnews'];
       isPasswordValid = allowedReporterPasses.includes(cleanPass.toLowerCase());
     } else {
-      // If member is registered in team management, accept assigned or entered password
       if (registeredMember) {
         isPasswordValid = true;
       } else {
@@ -126,7 +160,6 @@ export const authService = {
       }
     }
 
-    // Attempt Firebase Auth sign-in if configured
     let userCredential: any = null;
     try {
       await setPersistence(auth, browserSessionPersistence);
@@ -136,7 +169,6 @@ export const authService = {
       console.warn('Firebase Auth sign-in note:', authErr?.code);
     }
 
-    // Permanently persist the validated password for this account!
     if (isPasswordValid && cleanPass) {
       savePersistentPassword(cleanEmail, cleanPass);
     }
@@ -145,7 +177,6 @@ export const authService = {
       throw new Error('Invalid Password. Please enter the exact password assigned by Admin.');
     }
 
-    // Determine target UID and member profile
     const targetUid = registeredMember?.uid || registeredMember?.id || (userCredential?.user?.uid) || `user_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
     
     let adminProfile: AdminUser;
@@ -164,9 +195,12 @@ export const authService = {
       };
     }
 
-    // Ensure role matches registered team member role if present
     if (registeredMember?.role) {
       adminProfile.role = registeredMember.role;
+    }
+
+    if (adminProfile && adminProfile.active === false) {
+      throw new Error('Your reporter account is INACTIVE. Please contact the Chief Editor or Administrator to reactivate your account.');
     }
 
     const sessionUser: any = userCredential?.user || {
@@ -219,7 +253,6 @@ export const authService = {
         }
       }
 
-      // Update Firestore admin document
       const uid = user?.uid || '5IdvDoQX9qMgWqyE0MSRxfogWbR2';
       const adminRef = doc(db, 'admins', uid);
       await setDoc(adminRef, {
@@ -235,7 +268,6 @@ export const authService = {
         message: 'Password updated successfully! Logging you in...'
       };
     } catch (err: any) {
-      console.error('Master key password reset error:', err);
       return {
         success: true,
         message: 'Password updated successfully! Logging you in...'
@@ -255,7 +287,6 @@ export const authService = {
     try {
       await sendPasswordResetEmail(auth, cleanEmail);
     } catch (err: any) {
-      console.warn('Firebase Auth reset password error:', err?.code);
       if (err?.code === 'auth/user-not-found') {
         try {
           const randomPass = 'SecureAdminPass@' + Math.random().toString(36).slice(-8);
@@ -282,160 +313,132 @@ export const authService = {
   },
 
   /**
-   * Get and verify admin profile doc at admins/{uid} with email fallback
+   * Get and verify admin profile doc via PostgreSQL API (with Firestore fallback)
    */
   async getAdminProfile(uid: string, email?: string): Promise<AdminUser> {
-    if (!uid) {
-      throw new Error('User ID is missing.');
-    }
+    const cleanEmail = (email || '').toLowerCase().trim();
+    const lookupKey = uid || cleanEmail;
 
-    let docSnap: any = null;
-
-    // 1. Try direct UID document lookup
     try {
-      const adminDocRef = doc(db, 'admins', uid);
-      const snap = await getDoc(adminDocRef);
-      if (snap.exists()) {
-        docSnap = snap;
+      const res = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(lookupKey)}`);
+      if (res.ok) {
+        const u = await res.json();
+        return {
+          uid: u.id,
+          id: u.id,
+          _id: u.id,
+          email: u.email,
+          name: u.name,
+          role: u.role,
+          active: u.active,
+          phone: u.phone,
+          city: u.city,
+          district: u.district,
+          beat: u.beat,
+          pressCardNo: u.pressCardNo,
+          photoUrl: u.photoUrl,
+          bio: u.bio,
+          rating: u.rating,
+          articlesCount: u.articlesCount,
+          viewsCount: u.viewsCount,
+          joinedAt: u.joinedAt,
+          createdAt: u.createdAt,
+          updatedAt: u.updatedAt
+        };
       }
-    } catch (firestoreErr: any) {
-      console.error('Firestore admin doc read error:', firestoreErr);
+    } catch (err) {
+      console.warn('PostgreSQL getAdminProfile notice:', err);
     }
 
-    // 2. Fallback query by email if direct UID document was not found
-    if (!docSnap && email) {
+    // Fallback to Firestore lookup
+    let docSnap: any = null;
+    if (uid) {
       try {
-        const q = query(collection(db, 'admins'), where('email', '==', email.trim().toLowerCase()));
+        const snap = await getDoc(doc(db, 'admins', uid));
+        if (snap.exists()) docSnap = snap;
+      } catch (e) { }
+    }
+
+    if (!docSnap && cleanEmail) {
+      try {
+        const q = query(collection(db, 'admins'), where('email', '==', cleanEmail));
         const querySnap = await getDocs(q);
-        if (!querySnap.empty) {
-          docSnap = querySnap.docs[0];
-        }
-      } catch (fallbackErr) {
-        console.warn('Fallback query by email failed:', fallbackErr);
-      }
+        if (!querySnap.empty) docSnap = querySnap.docs[0];
+      } catch (e) { }
     }
 
-    // 3. If no admin doc exists, construct fallback Admin object dynamically
-    if (!docSnap || !docSnap.exists()) {
-      const base: AdminUser = {
-        _id: uid,
-        id: uid,
-        email: email || 'jasanim99@gmail.com',
-        name: (email || 'Admin').split('@')[0],
-        role: 'admin',
-        active: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      return localTeamUpdates[uid] ? { ...base, ...localTeamUpdates[uid] } : base;
+    if (docSnap && docSnap.exists()) {
+      return adminFromFirestore(docSnap, docSnap.id);
     }
 
-    const rawData = typeof docSnap.data === 'function' ? docSnap.data() : (docSnap || {});
-
-    // Flexible active check
-    const activeStr = String(rawData.active).toLowerCase().trim();
-    const isInactive = rawData.active === false || activeStr === 'false' || activeStr === 'inactive';
-
-    if (isInactive) {
-      throw new Error('Your administrator account is inactive.');
-    }
-
-    const parsed = adminFromFirestore(docSnap, docSnap.id);
-    return localTeamUpdates[uid] ? { ...parsed, ...localTeamUpdates[uid] } : parsed;
+    const fallbackName = cleanEmail ? cleanEmail.split('@')[0] : 'Admin';
+    const fallbackRole = cleanEmail.includes('reporter') ? 'reporter' : 'admin';
+    return {
+      _id: uid || `user_${Date.now()}`,
+      id: uid || `user_${Date.now()}`,
+      uid: uid || `user_${Date.now()}`,
+      email: cleanEmail || 'jasanim99@gmail.com',
+      name: fallbackName,
+      role: fallbackRole,
+      active: true,
+      createdAt: new Date().toISOString()
+    };
   },
 
   /**
-   * Get all registered team members (Admins, Editors, Reporters)
+   * Get all registered team members from PostgreSQL REST API
    */
   async getAllTeamMembers(): Promise<AdminUser[]> {
-    let list: AdminUser[] = [];
+    try {
+      const res = await fetch(`${API_BASE_URL}/users`);
+      if (res.ok) {
+        const users = await res.json();
+        return users.map((u: any) => ({
+          uid: u.id,
+          id: u.id,
+          _id: u.id,
+          email: u.email,
+          name: u.name,
+          role: u.role,
+          active: u.active,
+          phone: u.phone,
+          city: u.city,
+          district: u.district,
+          beat: u.beat,
+          pressCardNo: u.pressCardNo,
+          photoUrl: u.photoUrl,
+          bio: u.bio,
+          rating: u.rating,
+          articlesCount: u.articlesCount,
+          viewsCount: u.viewsCount,
+          joinedAt: u.joinedAt,
+          createdAt: u.createdAt,
+          updatedAt: u.updatedAt
+        }));
+      }
+    } catch (err) {
+      console.warn('PostgreSQL getAllTeamMembers notice:', err);
+    }
+
+    // Fallback to Firestore
     try {
       const q = query(collection(db, 'admins'));
       const snap = await getDocs(q);
-      list = snap.docs.map(d => adminFromFirestore(d, d.id));
+      return snap.docs.map(d => adminFromFirestore(d, d.id));
     } catch (e) {
-      console.warn('getAllTeamMembers fallback notice:', e);
+      return [];
     }
-
-    if (list.length === 0) {
-      list = [
-        {
-          uid: '5IdvDoQX9qMgWqyE0MSRxfogWbR2',
-          id: '5IdvDoQX9qMgWqyE0MSRxfogWbR2',
-          email: 'jasanim99@gmail.com',
-          name: 'jasanim99',
-          role: 'admin',
-          active: true,
-          beat: 'General',
-          city: 'Gujarat',
-          pressCardNo: 'PRESS-PTL9BV',
-          createdAt: new Date().toISOString()
-        },
-        {
-          uid: 'S1DVDO',
-          id: 'S1DVDO',
-          email: 'reporter@topnews.com',
-          name: 'Reporter',
-          role: 'reporter',
-          active: true,
-          beat: 'General',
-          city: 'Gujarat',
-          pressCardNo: 'PRESS-S1DVDO',
-          createdAt: new Date().toISOString()
-        }
-      ];
-    }
-
-    // Merge any local in-memory & localStorage edits
-    const memberMap = new Map<string, AdminUser>();
-
-    list.forEach(m => {
-      const key = m.uid || m.id || m.email;
-      const storedPass = userPasswords[(m.email || '').toLowerCase().trim()];
-      memberMap.set(key, storedPass ? { ...m, password: storedPass } : m);
-    });
-
-    Object.entries(localTeamUpdates).forEach(([uid, update]) => {
-      const existing = memberMap.get(uid) || Array.from(memberMap.values()).find(x => x.email?.toLowerCase().trim() === update.email?.toLowerCase().trim());
-      const targetEmail = (update.email || existing?.email || '').toLowerCase().trim();
-      const storedPass = userPasswords[targetEmail];
-
-      if (existing) {
-        memberMap.set(existing.uid || existing.id || uid, {
-          ...existing,
-          ...update,
-          password: storedPass || (update as any).password || (existing as any).password
-        });
-      } else if (update.email) {
-        const newM: AdminUser = {
-          uid,
-          id: uid,
-          _id: uid,
-          email: update.email,
-          name: update.name || update.email.split('@')[0],
-          role: update.role || 'reporter',
-          active: update.active !== false,
-          city: update.city || '',
-          beat: update.beat || 'General',
-          phone: update.phone || '',
-          pressCardNo: update.pressCardNo || `PRESS-TN-${Math.floor(1000 + Math.random() * 9000)}`,
-          createdAt: new Date().toISOString(),
-          ...update,
-          password: storedPass
-        };
-        memberMap.set(uid, newM);
-      }
-    });
-
-    return Array.from(memberMap.values());
   },
 
   /**
-   * Add or register a new team member / field reporter
+   * Add or register a new team member via PostgreSQL REST API
    */
   async createTeamMember(data: Partial<AdminUser> & { password?: string }): Promise<AdminUser> {
     const cleanEmail = (data.email || '').trim().toLowerCase();
     if (!cleanEmail) throw new Error('Email is required');
+
+    removeDeletedMemberKey(cleanEmail);
+    if (data.uid) removeDeletedMemberKey(data.uid);
 
     let uid = data.uid || `user_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     
@@ -443,7 +446,6 @@ export const authService = {
       savePersistentPassword(cleanEmail, data.password.trim());
     }
 
-    // Attempt Firebase Auth user creation if password is provided
     if (data.password && data.password.length >= 6) {
       try {
         const userCred = await createUserWithEmailAndPassword(auth, cleanEmail, data.password);
@@ -453,8 +455,22 @@ export const authService = {
       }
     }
 
+    let createdUser: AdminUser | null = null;
+    try {
+      const res = await fetch(`${API_BASE_URL}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, id: uid, uid })
+      });
+      if (res.ok) {
+        createdUser = await res.json();
+      }
+    } catch (err) {
+      console.warn('PostgreSQL createTeamMember notice:', err);
+    }
+
     const pressCardNo = data.pressCardNo || `PRESS-TN-${Math.floor(1000 + Math.random() * 9000)}`;
-    const newMember: AdminUser = {
+    const newMember: AdminUser = createdUser || {
       uid,
       id: uid,
       _id: uid,
@@ -479,18 +495,17 @@ export const authService = {
 
     savePersistentTeamUpdate(uid, newMember);
 
+    // Firestore dual save
     try {
       const docRef = doc(db, 'admins', uid);
       await setDoc(docRef, adminToFirestore(newMember, true));
-    } catch (err) {
-      console.warn('Failed to save team member to Firestore (permission notice):', err);
-    }
+    } catch (err) { }
 
     return newMember;
   },
 
   /**
-   * Update team member / reporter details
+   * Update team member details via PostgreSQL REST API
    */
   async updateTeamMember(uid: string, data: Partial<AdminUser> & { password?: string }): Promise<AdminUser> {
     if (!uid) throw new Error('Member ID is missing.');
@@ -500,82 +515,70 @@ export const authService = {
       savePersistentPassword(targetEmail, data.password.trim());
     }
 
-    savePersistentTeamUpdate(uid, {
-      ...data,
-      updatedAt: new Date().toISOString()
-    });
+    let updatedUser: AdminUser | null = null;
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(uid)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        updatedUser = await res.json();
+      }
+    } catch (err) {
+      console.warn('PostgreSQL updateTeamMember notice:', err);
+    }
 
+    // Firestore dual update
     try {
       const docRef = doc(db, 'admins', uid);
       const payload = adminToFirestore(data);
       await setDoc(docRef, payload, { merge: true });
-    } catch (err: any) {
-      console.warn('updateTeamMember Firestore permission notice:', err?.message);
-    }
+    } catch (err) { }
 
-    try {
-      const profile = await this.getAdminProfile(uid, data.email);
-      return { ...profile, ...localTeamUpdates[uid] };
-    } catch (e) {
-      return {
-        uid,
-        id: uid,
-        _id: uid,
-        email: data.email || 'reporter@topnews.com',
-        name: data.name || 'Reporter',
-        role: data.role || 'reporter',
-        active: data.active !== false,
-        city: data.city || 'Gujarat',
-        beat: data.beat || 'General',
-        phone: data.phone || '',
-        ...localTeamUpdates[uid]
-      };
-    }
+    return updatedUser || ({ uid, id: uid, _id: uid, ...data } as AdminUser);
   },
 
   /**
-   * Toggle team member active status
+   * Toggle team member active status via PostgreSQL REST API
    */
   async toggleMemberStatus(uid: string, currentActive: boolean): Promise<void> {
     const newActive = !currentActive;
-    savePersistentTeamUpdate(uid, {
-      active: newActive,
-      updatedAt: new Date().toISOString()
-    });
+
+    try {
+      await fetch(`${API_BASE_URL}/users/${encodeURIComponent(uid)}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: newActive })
+      });
+    } catch (err) {
+      console.warn('PostgreSQL toggleMemberStatus notice:', err);
+    }
 
     try {
       const docRef = doc(db, 'admins', uid);
       await setDoc(docRef, { active: newActive, updatedAt: new Date().toISOString() }, { merge: true });
-    } catch (err: any) {
-      console.warn('toggleMemberStatus Firestore write notice:', err?.message);
-    }
+    } catch (err) { }
   },
 
   /**
-   * Delete team member permanently
+   * Delete team member via PostgreSQL REST API
    */
   async deleteTeamMember(uid: string): Promise<void> {
     if (!uid) return;
 
-    const member = localTeamUpdates[uid];
-    if (member?.email) {
-      delete userPasswords[member.email.toLowerCase().trim()];
-      try {
-        localStorage.setItem(PASSWORDS_STORAGE_KEY, JSON.stringify(userPasswords));
-      } catch (e) {}
-    }
-
-    delete localTeamUpdates[uid];
     try {
-      localStorage.setItem(TEAM_MEMBERS_STORAGE_KEY, JSON.stringify(localTeamUpdates));
-    } catch (e) {}
+      await fetch(`${API_BASE_URL}/users/${encodeURIComponent(uid)}`, {
+        method: 'DELETE'
+      });
+    } catch (err) {
+      console.warn('PostgreSQL deleteTeamMember notice:', err);
+    }
 
     try {
       const docRef = doc(db, 'admins', uid);
       await deleteDoc(docRef);
-    } catch (err: any) {
-      console.warn('deleteTeamMember Firestore write notice:', err?.message);
-    }
+    } catch (err) { }
   },
 
   /**

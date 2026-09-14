@@ -7,12 +7,26 @@ import {
   Eye, 
   TrendingUp, 
   Play, 
-  ArrowUpRight
+  ArrowUpRight,
+  Clock,
+  CheckCircle2,
+  ShieldCheck,
+  Zap,
+  Users,
+  Bell,
+  Megaphone,
+  Plus,
+  Sparkles,
+  Layers,
+  Activity
 } from 'lucide-react';
 import { newsService } from '@/services/newsService';
 import { videoService } from '@/services/videoService';
+import { authService } from '@/services/authService';
 import LoadingSpinner from '@/components/Common/LoadingSpinner';
 import { useNavigate } from 'react-router-dom';
+
+const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 const formatTimeAgo = (dateInput: string | Date | number | undefined): string => {
   if (!dateInput) return 'Recently';
@@ -37,12 +51,32 @@ const Dashboard: React.FC = () => {
     queryKey: ['news-stats'],
     queryFn: () => newsService.getNewsStats(),
     staleTime: 0,
+    refetchInterval: 5000,
   });
 
   const { data: videoStats, isLoading: videoLoading } = useQuery({
     queryKey: ['video-stats'],
     queryFn: () => videoService.getVideoStats(),
     staleTime: 0,
+    refetchInterval: 5000,
+  });
+
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['team-members'],
+    queryFn: () => authService.getAllTeamMembers(),
+    staleTime: 10000,
+  });
+
+  const { data: subscriberData } = useQuery({
+    queryKey: ['push-subscriber-count'],
+    queryFn: () => fetch(`${API}/notifications/subscribers/count`).then(r => r.json()),
+    staleTime: 10000,
+  });
+
+  const { data: adsData } = useQuery({
+    queryKey: ['ads-stats'],
+    queryFn: () => fetch(`${API}/ads`).then(r => r.json()),
+    staleTime: 10000,
   });
 
   if (newsLoading || videoLoading) {
@@ -52,6 +86,10 @@ const Dashboard: React.FC = () => {
   const totalNews = newsStats?.total || 0;
   const totalVideos = videoStats?.total || 0;
   const combinedViews = (newsStats?.totalViews || 0) + (videoStats?.totalViews || 0);
+  const pendingCount = (newsStats as any)?.pending || 0;
+  const teamCount = teamMembers.length || 0;
+  const subscriberCount = subscriberData?.count || 0;
+  const activeAdsCount = (adsData?.ads || []).filter((a: any) => a.is_active).length || 0;
 
   const formattedViews = combinedViews >= 1000000 
     ? `${(combinedViews / 1000000).toFixed(1)}M` 
@@ -63,39 +101,84 @@ const Dashboard: React.FC = () => {
   const recentVideosList = videoStats?.recent || [];
 
   return (
-    <div className="space-y-8">
-      {/* Welcome Header */}
-      <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl lg:text-3xl font-bold text-[#191c1d] tracking-tight">Dashboard Overview</h2>
-          <p className="text-gray-500 text-sm mt-1">Real-time performance metrics and recent activity across your media network.</p>
+    <div className="space-y-8 max-w-7xl mx-auto pb-12">
+      {/* Dynamic Colorful Hero Header */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-8 shadow-2xl border border-indigo-800/40">
+        {/* Glow Blobs */}
+        <div className="absolute -right-12 -top-12 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -left-12 -bottom-12 w-72 h-72 bg-rose-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute right-1/3 bottom-0 w-64 h-64 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold text-[10px] uppercase px-3 py-1 rounded-full flex items-center gap-1.5 tracking-wider shadow-sm">
+                <Zap className="w-3.5 h-3.5 fill-current" /> LIVE CONTROL CENTER
+              </span>
+              <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold px-3 py-0.5 rounded-full flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> SYSTEM ONLINE
+              </span>
+            </div>
+            <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-white">
+              TOP NEWS Admin Console
+            </h1>
+            <p className="text-slate-300 text-sm font-medium max-w-2xl leading-relaxed">
+              Real-time media publishing, journalist management, push broadcasting, and network performance dashboard.
+            </p>
+          </div>
+
+          {/* Quick Header CTAs */}
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => navigate('/news/create')}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-500/25 flex items-center gap-2 text-xs transition-all active:scale-95 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create News</span>
+            </button>
+            
+            <button
+              onClick={() => navigate('/videos/create')}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-purple-500/25 flex items-center gap-2 text-xs transition-all active:scale-95 cursor-pointer"
+            >
+              <Video className="w-4 h-4" />
+              <span>Short Clip</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/notifications')}
+              className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-orange-500/25 flex items-center gap-2 text-xs transition-all active:scale-95 cursor-pointer"
+            >
+              <Bell className="w-4 h-4" />
+              <span>Push Broadcast</span>
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* Pending Reviews Alert Banner if any */}
-      {(newsStats as any)?.pending > 0 && (
+      {/* Pending Reviews Alert Banner */}
+      {pendingCount > 0 && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-r from-amber-500 to-orange-600 text-white p-4 rounded-2xl shadow-lg flex items-center justify-between gap-4"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white p-4.5 rounded-2xl shadow-lg flex items-center justify-between gap-4 font-sans"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0 animate-pulse">
-              <FileText className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center flex-shrink-0">
+              <Clock className="w-5 h-5 text-white animate-pulse" />
             </div>
             <div>
-              <h4 className="font-bold text-sm">
-                🚨 {(newsStats as any).pending} new articles submitted by reporters require review!
-              </h4>
-              <p className="text-xs text-amber-100 mt-0.5">
-                Open the Editorial Desk to review and publish live.
+              <p className="text-sm font-black">
+                {pendingCount} News Article{pendingCount > 1 ? 's' : ''} Pending Review!
+              </p>
+              <p className="text-xs text-amber-100 font-medium">
+                Reporters have submitted new draft articles waiting for your editorial approval.
               </p>
             </div>
           </div>
-
           <button
             onClick={() => navigate('/news/reviews')}
-            className="bg-white text-orange-700 hover:bg-amber-50 px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 transition-all active:scale-95 flex-shrink-0"
+            className="bg-white text-amber-900 hover:bg-amber-50 px-4 py-2 rounded-xl text-xs font-black shadow transition-all active:scale-95 flex items-center gap-1.5 flex-shrink-0 cursor-pointer"
           >
             <span>Review Now</span>
             <ArrowUpRight className="w-4 h-4" />
@@ -103,159 +186,208 @@ const Dashboard: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Stat Cards Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* VIBRANT BENTO STAT CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total News */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="bg-[#0058be] text-white p-6 rounded-2xl shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
-        >
-          <div className="relative z-10">
-            <div className="flex justify-between items-start mb-4">
-              <div className="bg-white/20 p-2.5 rounded-xl backdrop-blur-md">
-                <FileText className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xs font-bold bg-white/20 px-2.5 py-1 rounded-full text-white">+12%</span>
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 to-indigo-600 absolute top-0 left-0" />
+          <div className="flex items-center justify-between">
+            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-110 transition-transform">
+              <FileText className="w-6 h-6" />
             </div>
-            <p className="text-white/80 text-xs font-semibold uppercase tracking-wider">Total News Articles</p>
-            <h3 className="text-3xl lg:text-4xl font-extrabold mt-1 tracking-tight">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200/60 px-3 py-1 rounded-full">
+              Articles
+            </span>
+          </div>
+          <div className="mt-5">
+            <p className="text-3xl font-black text-slate-900 tracking-tight">
               {totalNews > 0 ? totalNews.toLocaleString() : '0'}
-            </h3>
+            </p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1.5 flex items-center justify-between">
+              <span>Total Articles</span>
+              <span className="text-emerald-600 text-[11px] flex items-center font-extrabold">
+                <TrendingUp className="w-3 h-3 mr-0.5" /> Published
+              </span>
+            </p>
           </div>
-          <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500 pointer-events-none">
-            <FileText className="w-32 h-32 text-white" />
-          </div>
-        </motion.div>
+        </div>
 
         {/* Short Videos */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="bg-[#d0e1fb] text-[#191c1d] p-6 rounded-2xl shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
-        >
-          <div className="relative z-10">
-            <div className="flex justify-between items-start mb-4">
-              <div className="bg-[#0058be]/10 p-2.5 rounded-xl">
-                <Video className="w-6 h-6 text-[#0058be]" />
-              </div>
-              <span className="text-xs font-bold bg-[#0058be]/10 text-[#0058be] px-2.5 py-1 rounded-full">+24%</span>
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-purple-500 to-pink-600 absolute top-0 left-0" />
+          <div className="flex items-center justify-between">
+            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:scale-110 transition-transform">
+              <Video className="w-6 h-6" />
             </div>
-            <p className="text-gray-600 text-xs font-semibold uppercase tracking-wider">Short Videos Published</p>
-            <h3 className="text-3xl lg:text-4xl font-extrabold mt-1 text-[#0058be] tracking-tight">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700 bg-purple-50 border border-purple-200/60 px-3 py-1 rounded-full">
+              Short Clips
+            </span>
+          </div>
+          <div className="mt-5">
+            <p className="text-3xl font-black text-slate-900 tracking-tight">
               {totalVideos > 0 ? totalVideos.toLocaleString() : '0'}
-            </h3>
+            </p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1.5 flex items-center justify-between">
+              <span>Short Videos</span>
+            </p>
           </div>
-          <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500 pointer-events-none">
-            <Video className="w-32 h-32 text-[#0058be]" />
-          </div>
-        </motion.div>
+        </div>
 
         {/* Total Views */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="bg-[#d8e2ff] text-[#001a42] p-6 rounded-2xl shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
-        >
-          <div className="relative z-10">
-            <div className="flex justify-between items-start mb-4">
-              <div className="bg-[#0058be]/10 p-2.5 rounded-xl">
-                <Eye className="w-6 h-6 text-[#0058be]" />
-              </div>
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-emerald-400 to-teal-600 absolute top-0 left-0" />
+          <div className="flex items-center justify-between">
+            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-110 transition-transform">
+              <Eye className="w-6 h-6" />
             </div>
-            <p className="text-[#004395] text-xs font-semibold uppercase tracking-wider">Total Views (MTD)</p>
-            <h3 className="text-3xl lg:text-4xl font-extrabold mt-1 tracking-tight text-[#001a42]">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-3 py-1 rounded-full">
+              Reach
+            </span>
+          </div>
+          <div className="mt-5">
+            <p className="text-3xl font-black text-slate-900 tracking-tight">
               {combinedViews > 0 ? formattedViews : '0'}
-            </h3>
+            </p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1.5 flex items-center justify-between">
+              <span>Total Network Views</span>
+              <span className="text-teal-600 text-[11px] flex items-center font-extrabold">
+                <Activity className="w-3 h-3 mr-0.5" /> Real-time
+              </span>
+            </p>
           </div>
-          <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500 pointer-events-none">
-            <Eye className="w-32 h-32 text-[#0058be]" />
-          </div>
-        </motion.div>
+        </div>
 
-        {/* Pending Submissions / Queue */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
-          onClick={() => navigate('/news/reviews')}
-          className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 p-6 rounded-2xl shadow-sm relative overflow-hidden group hover:shadow-md transition-all cursor-pointer"
-        >
-          <div className="relative z-10">
-            <div className="flex justify-between items-start mb-4">
-              <div className="bg-amber-500/20 p-2.5 rounded-xl text-amber-700">
-                <FileText className="w-6 h-6 text-amber-700" />
-              </div>
-              <span className="text-xs font-bold bg-amber-500 text-white px-2.5 py-1 rounded-full">Editorial</span>
+        {/* Review Queue */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-amber-400 to-orange-600 absolute top-0 left-0" />
+          <div className="flex items-center justify-between">
+            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-lg shadow-amber-500/25 group-hover:scale-110 transition-transform">
+              <Clock className="w-6 h-6" />
             </div>
-            <p className="text-amber-800 text-xs font-semibold uppercase tracking-wider">Pending Submissions</p>
-            <h3 className="text-3xl lg:text-4xl font-extrabold mt-1 text-amber-700 tracking-tight">
-              {(newsStats as any)?.pending || 0}
-            </h3>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-50 border border-amber-200/60 px-3 py-1 rounded-full">
+              Queue
+            </span>
           </div>
-        </motion.div>
+          <div className="mt-5">
+            <p className="text-3xl font-black text-slate-900 tracking-tight">
+              {pendingCount}
+            </p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1.5 flex items-center justify-between">
+              <span>Pending Reviews</span>
+              <span className="text-amber-600 text-[11px] flex items-center font-extrabold">
+                {pendingCount > 0 ? 'Needs Approval' : 'Desk Clear'}
+              </span>
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Side-by-Side Panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent News Panel */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col max-h-[600px] overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-[#0058be]" />
-              Recent News
-            </h3>
-            <button 
+      {/* SECONDARY LIVE NETWORK KPIS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Active Reporters */}
+        <div 
+          onClick={() => navigate('/reporters')}
+          className="bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/50 rounded-2xl border border-indigo-100 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform">
+              <Users className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-slate-900">{teamCount}</div>
+              <div className="text-xs font-bold text-indigo-900 uppercase tracking-wider">Journalists & Team</div>
+            </div>
+          </div>
+          <ArrowUpRight className="w-5 h-5 text-indigo-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all" />
+        </div>
+
+        {/* Web Push Subscribers */}
+        <div 
+          onClick={() => navigate('/notifications')}
+          className="bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/50 rounded-2xl border border-emerald-100 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
+              <Bell className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-slate-900">{subscriberCount}</div>
+              <div className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Push Subscribers</div>
+            </div>
+          </div>
+          <ArrowUpRight className="w-5 h-5 text-emerald-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
+        </div>
+
+        {/* Active Ads */}
+        <div 
+          onClick={() => navigate('/ads')}
+          className="bg-gradient-to-br from-purple-50/80 via-white to-pink-50/50 rounded-2xl border border-purple-100 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-bold shadow-md shadow-purple-600/20 group-hover:scale-105 transition-transform">
+              <Megaphone className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-slate-900">{activeAdsCount}</div>
+              <div className="text-xs font-bold text-purple-900 uppercase tracking-wider">Active Ads Running</div>
+            </div>
+          </div>
+          <ArrowUpRight className="w-5 h-5 text-purple-400 group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all" />
+        </div>
+      </div>
+
+      {/* RECENT ACTIVITY TABLES */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent News */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+          <div className="bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 text-white p-5 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-rose-400" />
+              </div>
+              <h3 className="font-bold text-base tracking-tight">Recent Published News</h3>
+            </div>
+            <button
               onClick={() => navigate('/news')}
-              className="text-[#0058be] text-xs font-bold hover:underline flex items-center gap-1"
+              className="text-xs font-bold text-rose-300 hover:text-white flex items-center gap-1 transition-colors bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl border border-white/10"
             >
-              View All
+              <span>View All</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide">
+          <div className="p-5 flex-1 divide-y divide-slate-100">
             {recentNewsList.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
-                <FileText className="w-12 h-12 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No recent news articles yet.</p>
-              </div>
+              <p className="text-xs text-slate-400 font-medium text-center py-10">No recent news articles found.</p>
             ) : (
-              recentNewsList.map((article) => (
+              recentNewsList.slice(0, 5).map((item: any) => (
                 <div
-                  key={article._id || article.id}
-                  onClick={() => navigate('/news')}
-                  className="flex gap-4 p-3 hover:bg-gray-50 rounded-xl transition-all group cursor-pointer border border-transparent hover:border-gray-200"
+                  key={item.id || item._id}
+                  onClick={() => navigate(`/news/${item.id || item._id}/view`)}
+                  className="py-3.5 first:pt-0 last:pb-0 flex items-center gap-4 hover:bg-slate-50 p-2.5 rounded-2xl transition-all cursor-pointer group"
                 >
-                  <div className="w-24 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                  {item.imageUrl ? (
                     <img
-                      src={article.imageUrl || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=500&auto=format&fit=crop&q=60'}
-                      alt={article.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=500&auto=format&fit=crop&q=60';
-                      }}
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="w-14 h-14 rounded-2xl object-cover border border-slate-100 flex-shrink-0 shadow-sm"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
-                  </div>
-                  <div className="flex-1 flex flex-col justify-between min-w-0">
-                    <h4 className="text-sm font-bold text-gray-900 truncate group-hover:text-[#0058be] transition-colors">
-                      {article.title}
+                  ) : (
+                    <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold flex-shrink-0">
+                      NEWS
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-bold text-slate-900 truncate group-hover:text-rose-600 transition-colors leading-snug">
+                      {item.title}
                     </h4>
-                    <div className="flex items-center gap-3 mt-1 flex-wrap">
-                      <span className="bg-[#0058be]/10 text-[#0058be] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                        {article.category || 'Technology'}
-                      </span>
-                      <div className="flex items-center gap-1 text-gray-500 text-xs">
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>{(article.views || 0).toLocaleString()}</span>
-                      </div>
-                      <span className="text-gray-400 text-xs">
-                        {formatTimeAgo(article.publishedAt)}
-                      </span>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium mt-1.5">
+                      <span className="uppercase text-blue-700 bg-blue-50 border border-blue-200/60 px-2 py-0.5 rounded-md font-bold">{item.category}</span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-cyan-600" /> {(item.views || 0).toLocaleString()} views</span>
+                      <span>•</span>
+                      <span>{formatTimeAgo(item.publishedAt || item.createdAt)}</span>
                     </div>
                   </div>
                 </div>
@@ -264,67 +396,52 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Recent Videos Panel */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col max-h-[600px] overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Video className="w-5 h-5 text-[#0058be]" />
-              Recent Videos
-            </h3>
-            <button 
+        {/* Recent Videos */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+                <Video className="w-4 h-4 text-indigo-400" />
+              </div>
+              <h3 className="font-bold text-base tracking-tight">Recent Short Video Clips</h3>
+            </div>
+            <button
               onClick={() => navigate('/videos')}
-              className="text-[#0058be] text-xs font-bold hover:underline flex items-center gap-1"
+              className="text-xs font-bold text-indigo-300 hover:text-white flex items-center gap-1 transition-colors bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl border border-white/10"
             >
-              Manage Clips
+              <span>Manage Clips</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide">
+          <div className="p-5 flex-1 divide-y divide-slate-100">
             {recentVideosList.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
-                <Video className="w-12 h-12 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No short videos uploaded yet.</p>
+              <div className="text-center py-10 text-slate-400 text-xs font-semibold">
+                <Video className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                No short videos uploaded yet.
               </div>
             ) : (
-              recentVideosList.map((video, idx) => (
+              recentVideosList.slice(0, 5).map((item: any) => (
                 <div
-                  key={video._id || video.id}
+                  key={item.id || item._id}
                   onClick={() => navigate('/videos')}
-                  className="flex gap-4 p-3 hover:bg-gray-50 rounded-xl transition-all group cursor-pointer border border-transparent hover:border-gray-200"
+                  className="py-3.5 first:pt-0 last:pb-0 flex items-center gap-4 hover:bg-slate-50 p-2.5 rounded-2xl transition-all cursor-pointer group"
                 >
-                  <div className="w-20 h-28 rounded-lg overflow-hidden flex-shrink-0 bg-gray-900 relative">
-                    <img
-                      src={video.thumbnailUrl || 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=60'}
-                      alt={video.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=60';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Play className="w-8 h-8 text-white fill-white" />
-                    </div>
-                    <div className="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
-                      0:{video.duration || 15}
-                    </div>
+                  <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center flex-shrink-0 shadow-sm relative overflow-hidden">
+                    {item.thumbnailUrl ? (
+                      <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <Play className="w-5 h-5 fill-white text-white" />
+                    )}
                   </div>
-
-                  <div className="flex-1 flex flex-col justify-start pt-1 min-w-0">
-                    <h4 className="text-sm font-bold text-gray-900 line-clamp-2 group-hover:text-[#0058be] transition-colors">
-                      {video.title}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors leading-snug">
+                      {item.title}
                     </h4>
-                    <div className="flex flex-col gap-1.5 mt-2">
-                      <span className="text-[#0058be] font-bold text-[10px] uppercase">
-                        {idx === 0 ? 'Trending #1' : video.category || 'General'}
-                      </span>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>{(video.views || 0).toLocaleString()}</span>
-                        </div>
-                      </div>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium mt-1.5">
+                      <span className="uppercase text-purple-700 bg-purple-50 border border-purple-200/60 px-2 py-0.5 rounded-md font-bold">{item.category}</span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-cyan-600" /> {(item.views || 0).toLocaleString()} views</span>
                     </div>
                   </div>
                 </div>

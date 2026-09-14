@@ -292,114 +292,124 @@ export function VideoSection() {
   }
 
   return (
-    <section className="mb-12 bg-muted/30 py-12">
+    <section className="mb-12">
       <div className="news-container">
-        <div className="flex items-center justify-between mb-8">
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-indigo-800/40 relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Section Header Row */}
+          <div className="flex items-center justify-between mb-8 relative z-10">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="flex items-center space-x-3.5"
+            >
+              <div className="h-12 w-12 bg-gradient-to-tr from-red-600 to-rose-500 rounded-2xl flex items-center justify-center shadow-lg shadow-red-600/30 text-white">
+                <Play className="h-6 w-6 fill-current" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    Video News & Shorts
+                  </h2>
+                  <span className="bg-red-500/20 text-red-300 border border-red-500/30 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full animate-pulse">
+                    ▶ LIVE
+                  </span>
+                </div>
+                <p className="text-slate-300 text-xs sm:text-sm font-medium mt-0.5">
+                  Watch latest video bulletins, ground reports, and short clips
+                </p>
+              </div>
+            </motion.div>
+            
+            <div className="flex items-center space-x-4">
+              <Button asChild className="hidden sm:flex bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-md border-0 transition-all active:scale-95">
+                <Link to="/videos">
+                  View All Videos →
+                </Link>
+              </Button>
+              
+              <div className="flex space-x-2 md:hidden">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => scroll('left')}
+                  disabled={!canScrollLeft}
+                  className="h-9 w-9 rounded-xl bg-white/10 text-white border-white/20"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => scroll('right')}
+                  disabled={!canScrollRight}
+                  className="h-9 w-9 rounded-xl bg-white/10 text-white border-white/20"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop: 3x3 Grid Layout */}
+          <div className="hidden md:block relative z-10">
+            <div className="space-y-6">
+              {videoRows.map((row, rowIndex) => (
+                <div key={rowIndex} className="grid grid-cols-3 gap-6">
+                  {row.map((video, videoIndex) => (
+                    <motion.div
+                      key={video._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: (rowIndex * 3 + videoIndex) * 0.1 }}
+                    >
+                      <VideoCard video={video} />
+                    </motion.div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile: Horizontal Scroll */}
+          <div className="md:hidden relative z-10">
+            <div 
+              ref={scrollContainerRef}
+              className="flex space-x-4 overflow-x-auto scrollbar-hide pb-4"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {videos.map((video, index) => (
+                <motion.div
+                  key={video._id}
+                  initial={{ opacity: 0, x: 50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="flex-shrink-0 w-72"
+                >
+                  <VideoCard video={video} />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile View All Button */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="flex items-center space-x-3"
+            className="mt-6 md:hidden relative z-10"
           >
-            <div className="h-10 w-10 bg-primary rounded-full flex items-center justify-center hidden md:flex">
-              <Play className="h-5 w-5 text-primary-foreground" fill="currentColor" />
-            </div>
-            <div>
-              <h2 className="text-2xl lg:text-3xl font-bold font-serif text-foreground">
-                Video News
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                Watch the latest news stories and breaking updates
-              </p>
-            </div>
-          </motion.div>
-          
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" asChild className="hidden sm:flex">
+            <Button className="w-full bg-gradient-to-r from-red-600 to-rose-700 text-white font-bold rounded-xl" asChild>
               <Link to="/videos">
                 View All Videos
               </Link>
             </Button>
-            
-            <div className="flex space-x-2 md:hidden">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => scroll('left')}
-                disabled={!canScrollLeft}
-                className="h-10 w-10 rounded-full"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => scroll('right')}
-                disabled={!canScrollRight}
-                className="h-10 w-10 rounded-full"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          </motion.div>
         </div>
-
-        {/* Desktop: 3x3 Grid Layout */}
-        <div className="hidden md:block">
-          <div className="space-y-8">
-            {videoRows.map((row, rowIndex) => (
-              <div key={rowIndex} className="grid grid-cols-3 gap-6">
-                {row.map((video, videoIndex) => (
-                  <motion.div
-                    key={video._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: (rowIndex * 3 + videoIndex) * 0.1 }}
-                  >
-                    <VideoCard video={video} />
-                  </motion.div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Mobile: Horizontal Scroll */}
-        <div className="md:hidden">
-          <div 
-            ref={scrollContainerRef}
-            className="flex space-x-4 overflow-x-auto scrollbar-hide pb-4"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {videos.map((video, index) => (
-              <motion.div
-                key={video._id}
-                initial={{ opacity: 0, x: 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                className="flex-shrink-0 w-72"
-              >
-                <VideoCard video={video} />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* Mobile View All Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-6 md:hidden"
-        >
-          <Button className="w-full" asChild>
-            <Link to="/videos">
-              View All Videos
-            </Link>
-          </Button>
-        </motion.div>
       </div>
     </section>
   );

@@ -3,79 +3,26 @@ import {
   doc,
   getDoc,
   getDocs,
-  addDoc,
   setDoc,
   updateDoc,
   deleteDoc,
-  query,
-  where,
-  orderBy,
   serverTimestamp,
-  increment,
-  QueryConstraint
+  increment
 } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { storageService } from '@/services/storageService';
 import { ShortVideo, ApiResponse } from '@/types';
-import { videoToFirestore, videoFromFirestore, generateSlug, parseDateToMillis, isLanguageMatch } from '@/utils/converters';
+import { videoToFirestore, videoFromFirestore, generateSlug, parseDateToMillis } from '@/utils/converters';
 
 export { generateSlug };
 
-const DELETED_VIDEO_KEY = 'topnews_deleted_video_ids';
-const CREATED_VIDEO_KEY = 'topnews_created_videos';
+const API_BASE_URL = 'http://localhost:3000';
 
-export const getDeletedVideoIds = (): string[] => {
-  try {
-    const raw = localStorage.getItem(DELETED_VIDEO_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
-  }
-};
-
-export const addDeletedVideoId = (id: string) => {
-  try {
-    const current = getDeletedVideoIds();
-    if (!current.includes(id)) {
-      current.push(id);
-      localStorage.setItem(DELETED_VIDEO_KEY, JSON.stringify(current));
-    }
-  } catch (e) {}
-};
-
-export const getCreatedVideos = (): ShortVideo[] => {
-  try {
-    const raw = localStorage.getItem(CREATED_VIDEO_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
-  }
-};
-
-export const saveCreatedVideo = (video: ShortVideo) => {
-  try {
-    const current = getCreatedVideos();
-    const existingIndex = current.findIndex(v => (v.id && v.id === video.id) || (v._id && v._id === video._id));
-    if (existingIndex >= 0) {
-      current[existingIndex] = video;
-    } else {
-      current.unshift(video);
-    }
-    localStorage.setItem(CREATED_VIDEO_KEY, JSON.stringify(current));
-  } catch (e) {}
-};
-
-export const removeCreatedVideo = (id: string) => {
-  try {
-    const current = getCreatedVideos();
-    const filtered = current.filter(v => v.id !== id && v._id !== id);
-    localStorage.setItem(CREATED_VIDEO_KEY, JSON.stringify(filtered));
-  } catch (e) {}
-};
+const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('topnews_realtime_sync') : null;
 
 export const videoService = {
   /**
-   * Get paginated & filtered list of short videos
+   * Get paginated & filtered list of short videos from PostgreSQL REST API
    */
   async getVideos(options: {
     page?: number;
@@ -88,81 +35,51 @@ export const videoService = {
   } = {}): Promise<ApiResponse<ShortVideo>> {
     const pageNum = options.page || 1;
     const limitNum = options.limit || 10;
-    const deletedIds = getDeletedVideoIds();
 
-    let firestoreVideos: ShortVideo[] = [];
+    const queryParams = new URLSearchParams();
+    queryParams.append('page', pageNum.toString());
+    queryParams.append('limit', limitNum.toString());
+    if (options.category) queryParams.append('category', options.category);
+    if (options.topic) queryParams.append('topic', options.topic);
+    if (options.language) queryParams.append('language', options.language);
+    if (options.status) queryParams.append('status', options.status);
+    if (options.search) queryParams.append('search', options.search);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/short-videos?${queryParams.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        return {
+          total: data.total || 0,
+          page: data.page || pageNum,
+          limit: data.limit || limitNum,
+          articles: data.videos || []
+        };
+      }
+    } catch (err) {
+      console.warn('PostgreSQL API video fetch error, falling back to Firestore:', err);
+    }
+
+    // Fallback to Firestore
     try {
       const videosColRef = collection(db, 'videos');
       const querySnapshot = await getDocs(videosColRef);
-      firestoreVideos = querySnapshot.docs.map(d => videoFromFirestore(d, d.id));
-    } catch (e) {
-      console.warn('Firestore video fetch notice:', e);
-    }
+      let videos = querySnapshot.docs
+        .filter(d => d.data().status !== 'deleted')
+        .map(d => videoFromFirestore(d, d.id));
 
-    let backendVideos: ShortVideo[] = [];
-    try {
-      const res = await fetch('http://localhost:3000/short-videos');
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.videos)) {
-          backendVideos = data.videos;
-        } else if (Array.isArray(data)) {
-          backendVideos = data;
-        }
+      if (options.category && options.category.toLowerCase() !== 'all') {
+        videos = videos.filter(v => (v.category || '').toLowerCase() === options.category!.toLowerCase());
       }
-    } catch (e) { }
 
-    const localCreated = getCreatedVideos();
-    const videoMap = new Map<string, ShortVideo>();
-    firestoreVideos.forEach(v => { if (v.id || v._id) videoMap.set((v.id || v._id)!, v); });
-    backendVideos.forEach(v => { if (v.id || v._id) videoMap.set((v.id || v._id)!, v); });
-    localCreated.forEach(v => { if (v.id || v._id) videoMap.set((v.id || v._id)!, v); });
+      videos.sort((a, b) => parseDateToMillis(b.publishedAt) - parseDateToMillis(a.publishedAt));
+      const total = videos.length;
+      const paginated = videos.slice((pageNum - 1) * limitNum, pageNum * limitNum);
 
-    let videos = Array.from(videoMap.values()).filter(v =>
-      (v as any).status !== 'deleted' &&
-      !deletedIds.includes(v.id || v._id || '')
-    );
-
-    if (options.status && options.status !== 'all') {
-      const statusVal = options.status.toLowerCase();
-      videos = videos.filter(v => (v.status || 'published').toLowerCase() === statusVal);
+      return { total, page: pageNum, limit: limitNum, articles: paginated };
+    } catch (e) {
+      return { total: 0, page: pageNum, limit: limitNum, articles: [] };
     }
-
-    if (options.language && options.language.trim() !== '') {
-      videos = videos.filter(v => isLanguageMatch(v.language, options.language));
-    }
-
-    if (options.category && options.category.trim() !== '' && options.category.toLowerCase() !== 'all') {
-      const catVal = options.category.toLowerCase().trim();
-      videos = videos.filter(v => (v.category || '').toLowerCase() === catVal);
-    }
-
-    if (options.topic && options.topic.trim() !== '') {
-      const topVal = options.topic.toLowerCase().trim();
-      videos = videos.filter(v => (v.topic || '').toLowerCase() === topVal);
-    }
-
-    if (options.search && options.search.trim() !== '') {
-      const term = options.search.toLowerCase().trim();
-      videos = videos.filter(v =>
-        v.title.toLowerCase().includes(term) ||
-        v.description.toLowerCase().includes(term) ||
-        (Array.isArray(v.keywords) && v.keywords.some(k => k.toLowerCase().includes(term)))
-      );
-    }
-
-    videos.sort((a, b) => parseDateToMillis(b.publishedAt) - parseDateToMillis(a.publishedAt));
-
-    const total = videos.length;
-    const startIndex = (pageNum - 1) * limitNum;
-    const paginatedVideos = videos.slice(startIndex, startIndex + limitNum);
-
-    return {
-      total,
-      page: pageNum,
-      limit: limitNum,
-      videos: paginatedVideos,
-    };
   },
 
   /**
@@ -170,182 +87,172 @@ export const videoService = {
    */
   async getVideoById(id: string): Promise<ShortVideo | null> {
     if (!id) return null;
-    const docRef = doc(db, 'videos', id);
-    const docSnap = await getDoc(docRef);
 
-    if (!docSnap.exists()) {
-      return null;
+    try {
+      const res = await fetch(`${API_BASE_URL}/short-videos/${encodeURIComponent(id)}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('PostgreSQL API getVideoById error:', err);
     }
 
-    return videoFromFirestore(docSnap, docSnap.id);
+    try {
+      const docRef = doc(db, 'videos', id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return videoFromFirestore(docSnap, docSnap.id);
+      }
+    } catch (e) { }
+
+    return null;
   },
 
   /**
-   * Automatically create video (Auto collection creation)
+   * Create short video
    */
   async createVideo(data: Partial<ShortVideo>): Promise<ShortVideo> {
-    const payload = videoToFirestore(data, true);
-    const videosColRef = collection(db, 'videos');
-
     let createdVideo: ShortVideo | null = null;
 
     try {
-      const docRef = await addDoc(videosColRef, payload);
-      const createdSnap = await getDoc(docRef);
-      createdVideo = videoFromFirestore(createdSnap, docRef.id);
-    } catch (err: unknown) {
-      console.warn('Firestore createVideo notice:', err);
-    }
-
-    try {
-      const res = await fetch('http://localhost:3000/short-videos', {
+      const res = await fetch(`${API_BASE_URL}/short-videos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(data)
       });
       if (res.ok) {
-        const backendData = await res.json();
-        if (!createdVideo) {
-          createdVideo = { ...data, id: backendData._id || backendData.id || Date.now().toString() } as ShortVideo;
-        }
+        createdVideo = await res.json();
       }
-    } catch (e) {}
-
-    if (!createdVideo) {
-      const customId = 'video_' + Date.now();
-      createdVideo = {
-        ...data,
-        id: customId,
-        _id: customId,
-        views: 0,
-        publishedAt: data.publishedAt || new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        status: data.status || 'published'
-      } as ShortVideo;
+    } catch (err) {
+      console.warn('PostgreSQL API createVideo error:', err);
     }
 
-    if (createdVideo) {
-      saveCreatedVideo(createdVideo);
+    const targetId = createdVideo?.id || data.id || data._id || ('video_' + Date.now());
+    const fullVideo: ShortVideo = createdVideo || {
+      ...data,
+      id: targetId,
+      _id: targetId,
+      title: data.title ? data.title.trim() : '',
+      slug: data.slug || generateSlug(data.title || ''),
+      description: data.description || '',
+      videoUrl: data.videoUrl || '',
+      thumbnailUrl: data.thumbnailUrl || '',
+      duration: data.duration || 0,
+      category: (data.category || 'general').toLowerCase().trim(),
+      topic: (data.topic || 'general').toLowerCase().trim(),
+      language: (data.language || 'en').toLowerCase().trim(),
+      section: data.section || 'main',
+      keywords: Array.isArray(data.keywords) ? data.keywords : [],
+      tags: Array.isArray(data.tags) ? data.tags : [],
+      status: data.status || 'published',
+      views: 0,
+      publishedAt: data.publishedAt || new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    try {
+      const payload = videoToFirestore(fullVideo, true);
+      await setDoc(doc(db, 'videos', targetId), payload, { merge: true });
+    } catch (e) { }
+
+    if (syncChannel) {
+      syncChannel.postMessage({ type: 'VIDEO_UPDATED', video: fullVideo });
     }
 
-    return createdVideo;
+    return fullVideo;
   },
 
   /**
-   * Update existing video
+   * Update existing short video
    */
   async updateVideo(id: string, data: Partial<ShortVideo>): Promise<ShortVideo> {
-    const existingVideo = await this.getVideoById(id);
-
-    const fullVideo: ShortVideo = existingVideo
-      ? { ...existingVideo, ...data, id, _id: id }
-      : ({ ...data, id, _id: id } as ShortVideo);
-
-    const docRef = doc(db, 'videos', id);
-    const payload = videoToFirestore(fullVideo, false);
-
     let updatedVideo: ShortVideo | null = null;
 
     try {
-      await setDoc(docRef, payload, { merge: true });
-      const updatedSnap = await getDoc(docRef);
-      if (updatedSnap.exists()) {
-        updatedVideo = videoFromFirestore(updatedSnap, id);
-      }
-    } catch (err: unknown) {
-      console.warn('Firestore updateVideo notice:', err);
-    }
-
-    try {
-      await fetch(`http://localhost:3000/short-videos/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/short-videos/${encodeURIComponent(id)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(data)
       });
-    } catch (e) {}
+      if (res.ok) {
+        updatedVideo = await res.json();
+      }
+    } catch (err) {
+      console.warn('PostgreSQL API updateVideo error:', err);
+    }
 
-    const finalVideo = updatedVideo || fullVideo;
+    const finalVideo: ShortVideo = updatedVideo || ({ id, ...data } as ShortVideo);
 
-    if (finalVideo) {
-      saveCreatedVideo(finalVideo);
+    try {
+      const docRef = doc(db, 'videos', id);
+      const payload = videoToFirestore(finalVideo, false);
+      await setDoc(docRef, payload, { merge: true });
+    } catch (e) { }
+
+    if (syncChannel) {
+      syncChannel.postMessage({ type: 'VIDEO_UPDATED', video: finalVideo });
     }
 
     return finalVideo;
   },
 
   /**
-   * Delete video and clean up Storage media
+   * Delete short video
    */
   async deleteVideo(id: string): Promise<void> {
-    addDeletedVideoId(id);
-    removeCreatedVideo(id);
-
     try {
       const video = await this.getVideoById(id);
       if (video) {
         if (video.videoUrl) {
-          try { await storageService.deleteVideo(video.videoUrl); } catch (e) {}
+          try { await storageService.deleteVideo(video.videoUrl); } catch (e) { }
         }
         if (video.thumbnailUrl) {
-          try { await storageService.deleteVideoThumbnail(video.thumbnailUrl); } catch (e) {}
+          try { await storageService.deleteNewsImage(video.thumbnailUrl); } catch (e) { }
         }
       }
-    } catch (e) {}
+    } catch (e) { }
 
-    let firestoreDeleted = false;
-    // Firestore deletion
     try {
-      const docRef = doc(db, 'videos', id);
-      await deleteDoc(docRef);
-      firestoreDeleted = true;
-    } catch (err) {
-      console.warn('Firestore deleteVideo notice, attempting soft delete:', err);
-    }
-
-    if (!firestoreDeleted) {
-      try {
-        const docRef = doc(db, 'videos', id);
-        await setDoc(docRef, { status: 'deleted', updatedAt: serverTimestamp() }, { merge: true });
-      } catch (err) {
-        console.warn('Firestore video soft delete notice:', err);
-      }
-    }
-
-    // Backend API deletion
-    try {
-      await fetch(`http://localhost:3000/short-videos/${id}`, {
+      await fetch(`${API_BASE_URL}/short-videos/${encodeURIComponent(id)}`, {
         method: 'DELETE'
       });
-    } catch (e) {}
-  },
+    } catch (err) {
+      console.warn('PostgreSQL API deleteVideo error:', err);
+    }
 
-  /**
-   * Publish short video
-   */
-  async publishVideo(id: string): Promise<ShortVideo> {
-    return this.updateVideo(id, { status: 'published' });
-  },
+    try {
+      const docRef = doc(db, 'videos', id);
+      await setDoc(docRef, { status: 'deleted', updatedAt: serverTimestamp() }, { merge: true });
+      await deleteDoc(docRef);
+    } catch (e) { }
 
-  /**
-   * Unpublish short video (set to draft)
-   */
-  async unpublishVideo(id: string): Promise<ShortVideo> {
-    return this.updateVideo(id, { status: 'draft' });
+    if (syncChannel) {
+      syncChannel.postMessage({ type: 'VIDEO_DELETED', id });
+    }
   },
 
   /**
    * Increment view count atomically
    */
   async incrementViews(id: string): Promise<void> {
-    const docRef = doc(db, 'videos', id);
-    await updateDoc(docRef, {
-      views: increment(1),
-      updatedAt: serverTimestamp()
-    });
+    try {
+      await fetch(`${API_BASE_URL}/short-videos/${encodeURIComponent(id)}/views`, {
+        method: 'PATCH'
+      });
+    } catch (e) { }
+
+    try {
+      const docRef = doc(db, 'videos', id);
+      await updateDoc(docRef, {
+        views: increment(1),
+        updatedAt: serverTimestamp()
+      });
+    } catch (e) { }
   },
 
   /**
-   * Dashboard statistics for videos
+   * Video Dashboard statistics
    */
   async getVideoStats(): Promise<{
     total: number;
@@ -355,32 +262,22 @@ export const videoService = {
     recent: ShortVideo[];
   }> {
     try {
-      const videosColRef = collection(db, 'videos');
-      const querySnapshot = await getDocs(videosColRef);
-      const deletedIds = getDeletedVideoIds();
-      const localCreated = getCreatedVideos();
-      const videoMap = new Map<string, ShortVideo>();
-      querySnapshot.docs.forEach(d => {
-        const item = videoFromFirestore(d, d.id);
-        if (item.id || item._id) videoMap.set((item.id || item._id)!, item);
-      });
-      localCreated.forEach(v => { if (v.id || v._id) videoMap.set((v.id || v._id)!, v); });
-
-      const videos = Array.from(videoMap.values())
-        .filter(v => (v as any).status !== 'deleted' && !deletedIds.includes(v.id || v._id || ''));
-
-      const total = videos.length;
-      const published = videos.filter(v => v.status === 'published').length;
-      const draft = videos.filter(v => v.status === 'draft').length;
-      const totalViews = videos.reduce((acc, curr) => acc + (curr.views || 0), 0);
-
-      videos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-      const recent = videos.slice(0, 5);
-
-      return { total, published, draft, totalViews, recent };
-    } catch (error) {
-      console.error('Error fetching video stats:', error);
-      return { total: 0, published: 0, draft: 0, totalViews: 0, recent: [] };
+      const res = await fetch(`${API_BASE_URL}/short-videos/stats/dashboard`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('PostgreSQL API getVideoStats error:', err);
     }
+
+    const fallback = await this.getVideos({ limit: 500, status: 'all' });
+    const videos = fallback.articles || [];
+    return {
+      total: videos.length,
+      published: videos.filter(v => v.status === 'published').length,
+      draft: videos.filter(v => v.status === 'draft').length,
+      totalViews: videos.reduce((acc, curr) => acc + (curr.views || 0), 0),
+      recent: videos.slice(0, 5)
+    };
   }
 };

@@ -8,8 +8,18 @@ const ADMIN_SESSION_KEY = 'topnews_admin_session';
 
 const getStoredSession = () => {
   try {
-    const raw = localStorage.getItem(ADMIN_SESSION_KEY) || sessionStorage.getItem(ADMIN_SESSION_KEY);
-    if (raw) return JSON.parse(raw);
+    // 1. Check sessionStorage FIRST for strict tab-isolated session
+    const sessionRaw = sessionStorage.getItem(ADMIN_SESSION_KEY);
+    if (sessionRaw) {
+      return JSON.parse(sessionRaw);
+    }
+    // 2. Fallback to localStorage ONLY if sessionStorage is empty
+    const localRaw = localStorage.getItem(ADMIN_SESSION_KEY);
+    if (localRaw) {
+      const parsed = JSON.parse(localRaw);
+      sessionStorage.setItem(ADMIN_SESSION_KEY, localRaw);
+      return parsed;
+    }
   } catch (e) {}
   return null;
 };
@@ -17,15 +27,15 @@ const getStoredSession = () => {
 const saveStoredSession = (user: any, admin: any) => {
   try {
     const payload = JSON.stringify({ user, admin });
-    localStorage.setItem(ADMIN_SESSION_KEY, payload);
     sessionStorage.setItem(ADMIN_SESSION_KEY, payload);
+    localStorage.setItem(ADMIN_SESSION_KEY, payload);
   } catch (e) {}
 };
 
 const clearStoredSession = () => {
   try {
-    localStorage.removeItem(ADMIN_SESSION_KEY);
     sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    localStorage.removeItem(ADMIN_SESSION_KEY);
   } catch (e) {}
 };
 
@@ -64,13 +74,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (import.meta.env.DEV) {
         console.warn('AuthContext: User admin verification failed:', err.message);
       }
-      if (!admin) {
+      const cached = getStoredSession();
+      if (cached && cached.admin) {
+        setAdmin(cached.admin);
+      } else if (!admin) {
         const fallbackAdmin: AdminUser = {
           _id: currentUser.uid,
           id: currentUser.uid,
           email: currentUser.email || 'jasanim99@gmail.com',
           name: (currentUser.email || 'Admin').split('@')[0],
-          role: 'admin',
+          role: (currentUser.email || '').includes('reporter') ? 'reporter' : 'admin',
           active: true,
           createdAt: new Date().toISOString()
         };
@@ -89,8 +102,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const cached = getStoredSession();
         if (cached && cached.user && cached.admin) {
           setUser(cached.user);
-          const normalizedRole = String(cached.admin.role || '').toLowerCase() === 'reporter' ? 'reporter' : 'admin';
-          setAdmin({ ...cached.admin, role: normalizedRole as any });
+          setAdmin(cached.admin);
+          try {
+            const freshProfile = await authService.getAdminProfile(cached.user.uid, cached.user.email);
+            setAdmin(freshProfile);
+            saveStoredSession(cached.user, freshProfile);
+          } catch (e) {}
         } else {
           setUser(null);
           setAdmin(null);
@@ -99,7 +116,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Real-time status update channel listener
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('topnews_user_status_channel');
+      bc.onmessage = (event) => {
+        if (event.data && event.data.uid) {
+          const { uid, active } = event.data;
+          setAdmin(prev => {
+            if (prev && (prev.uid === uid || prev.id === uid || prev._id === uid)) {
+              const updated = { ...prev, active };
+              saveStoredSession(user, updated);
+              return updated;
+            }
+            return prev;
+          });
+        }
+      };
+    } catch (e) {}
+
+    return () => {
+      unsubscribe();
+      if (bc) bc.close();
+    };
   }, []);
 
   const login = async (email: string, pass: string) => {

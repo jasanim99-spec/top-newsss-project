@@ -3,25 +3,29 @@ import {
   doc,
   getDoc,
   getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
   updateDoc,
   increment,
   DocumentData,
   QueryDocumentSnapshot,
-  Timestamp,
-  startAfter
+  Timestamp
 } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 import { NewsArticle, NewsResponse } from '@/store/newsStore';
 import { parseDateToMillis, isLanguageMatch, getCreatedNewsArticles, getDeletedNewsIds } from '@/utils/converters';
 import { mockArticles } from '@/data/mockNews';
 
+const API_BASE_URL = 'http://localhost:3000';
 const NEWS_COLLECTION = 'news';
 
-// Helper to convert Firestore document to NewsArticle with clean dates
+const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('topnews_realtime_sync') : null;
+if (syncChannel) {
+  syncChannel.onmessage = (event) => {
+    if (event.data && (event.data.type === 'NEWS_UPDATED' || event.data.type === 'NEWS_DELETED')) {
+      window.dispatchEvent(new CustomEvent('topnews_realtime_refetch'));
+    }
+  };
+}
+
 const mapDocToNewsArticle = (docSnap: QueryDocumentSnapshot<DocumentData> | DocumentData, id: string): NewsArticle => {
   const data = docSnap.data ? docSnap.data() : docSnap;
   
@@ -59,250 +63,188 @@ const mapDocToNewsArticle = (docSnap: QueryDocumentSnapshot<DocumentData> | Docu
   };
 };
 
-const DELETED_NEWS_KEY = 'topnews_deleted_news_ids';
-
-const getDeletedNewsIds = (): string[] => {
-  try {
-    const raw = localStorage.getItem(DELETED_NEWS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
-  }
-};
-
-const CREATED_NEWS_KEY = 'topnews_created_news_articles';
-
-const getCreatedNewsArticles = (): NewsArticle[] => {
-  try {
-    const raw = localStorage.getItem(CREATED_NEWS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
-  }
-};
-
 export const newsService = {
-  // Fetch published news with optional filtering & pagination
+  /**
+   * Fetch published news with optional filtering & pagination from PostgreSQL REST API
+   */
   async getPublishedNews(options: {
     language?: string;
     category?: string;
     topic?: string;
+    section?: string;
     limitNum?: number;
-    startAfterDoc?: QueryDocumentSnapshot<DocumentData>;
+    startAfterDoc?: any;
   } = {}): Promise<NewsResponse> {
     const pageSize = options.limitNum || 20;
 
+    const queryParams = new URLSearchParams();
+    queryParams.append('status', 'published');
+    queryParams.append('limit', pageSize.toString());
+    if (options.category) queryParams.append('category', options.category);
+    if (options.topic) queryParams.append('topic', options.topic);
+    if (options.language) queryParams.append('language', options.language);
+    if (options.section) queryParams.append('section', options.section);
+
     try {
-      let firestoreArticles: NewsArticle[] = [];
-      try {
-        const newsColRef = collection(db, NEWS_COLLECTION);
-        const querySnapshot = await getDocs(newsColRef);
-        firestoreArticles = querySnapshot.docs.map(docSnap => mapDocToNewsArticle(docSnap, docSnap.id));
-      } catch (e) {}
-
-      let backendArticles: NewsArticle[] = [];
-      try {
-        const res = await fetch('http://localhost:3000/news');
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.articles)) {
-            backendArticles = data.articles;
-          } else if (Array.isArray(data)) {
-            backendArticles = data;
-          }
-        }
-      } catch (e) {}
-
-      let settingsDeletedIds: string[] = [];
-      let settingsCreatedArticles: NewsArticle[] = [];
-      try {
-        const setRes = await fetch('http://localhost:3000/settings');
-        if (setRes.ok) {
-          const setData = await setRes.json();
-          if (Array.isArray(setData.deletedNewsIds)) settingsDeletedIds = setData.deletedNewsIds;
-          if (Array.isArray(setData.createdArticles)) settingsCreatedArticles = setData.createdArticles;
-        }
-      } catch (e) {}
-
-      const localCreated = getCreatedNewsArticles();
-      const deletedIds = getDeletedNewsIds();
-
-      const articleMap = new Map<string, NewsArticle>();
-      firestoreArticles.forEach(a => { if (a.id || a._id) articleMap.set((a.id || a._id)!, a); });
-      backendArticles.forEach(a => { if (a.id || a._id) articleMap.set((a.id || a._id)!, a); });
-      settingsCreatedArticles.forEach(a => { if (a.id || a._id) articleMap.set((a.id || a._id)!, a); });
-      localCreated.forEach(a => { if (a.id || a._id) articleMap.set((a.id || a._id)!, a); });
-
-      // Fallback to mockArticles only if no other articles exist anywhere
-      if (articleMap.size === 0) {
-        mockArticles.forEach(a => { if (a.id || a._id) articleMap.set((a.id || a._id)!, a); });
+      const res = await fetch(`${API_BASE_URL}/news?${queryParams.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        return {
+          total: data.total || 0,
+          page: data.page || 1,
+          limit: data.limit || pageSize,
+          articles: data.articles || []
+        };
       }
+    } catch (err) {
+      console.warn('PostgreSQL API news fetch notice, falling back to Firestore:', err);
+    }
 
-      let articles = Array.from(articleMap.values());
+    // Fallback to Firestore
+    try {
+      const newsColRef = collection(db, NEWS_COLLECTION);
+      const querySnapshot = await getDocs(newsColRef);
+      let articles = querySnapshot.docs
+        .map(docSnap => mapDocToNewsArticle(docSnap, docSnap.id))
+        .filter(a => (a.status || 'published') === 'published');
 
-      // Filter published and non-deleted
-      articles = articles.filter(a =>
-        ((a.status || 'published').toLowerCase() === 'published' || (a.status as any) === 'approved') &&
-        !deletedIds.includes(a.id || a._id || '') &&
-        !settingsDeletedIds.includes(a.id || a._id || '')
-      );
-
+      if (options.category && options.category !== 'all') {
+        articles = articles.filter(a => (a.category || '').toLowerCase() === options.category!.toLowerCase());
+      }
+      if (options.topic) {
+        articles = articles.filter(a => (a.topic || '').toLowerCase() === options.topic!.toLowerCase());
+      }
       if (options.language) {
         articles = articles.filter(a => isLanguageMatch(a.language || 'en', options.language));
       }
 
-      if (options.category && options.category !== 'all') {
-        articles = articles.filter(a => (a.category || '').toLowerCase() === options.category?.toLowerCase());
-      }
-
-      if (options.topic) {
-        articles = articles.filter(a => (a.topic || '').toLowerCase() === options.topic?.toLowerCase());
-      }
-
-      // Sort by publishedAt desc
       articles.sort((a, b) => parseDateToMillis(b.publishedAt) - parseDateToMillis(a.publishedAt));
-
-      const paginated = articles.slice(0, pageSize);
 
       return {
         total: articles.length,
         page: 1,
         limit: pageSize,
-        articles: paginated
+        articles: articles.slice(0, pageSize)
       };
-    } catch (error) {
-      console.error('Error fetching published news from Firestore:', error);
-      return { total: 0, page: 1, limit: pageSize, articles: [] };
+    } catch (e) {
+      return { total: 0, page: 1, limit: pageSize, articles: mockArticles.slice(0, pageSize) };
     }
   },
 
-  // Fetch article by ID
+  /**
+   * Fetch article by ID or Slug from PostgreSQL REST API
+   */
   async getNewsById(id: string): Promise<NewsArticle | null> {
+    if (!id) return null;
+
     try {
-      const res = await this.getPublishedNews({ limitNum: 1000 });
-      const article = res.articles.find(a => a.id === id || a._id === id || a.slug === id);
-      if (article) {
-        return article;
+      const res = await fetch(`${API_BASE_URL}/news/${encodeURIComponent(id)}`);
+      if (res.ok) {
+        return await res.json();
       }
+    } catch (err) {
+      console.warn('PostgreSQL API getNewsById notice:', err);
+    }
+
+    try {
       const docRef = doc(db, NEWS_COLLECTION, id);
       const docSnap = await getDoc(docRef);
-
       if (docSnap.exists()) {
         return mapDocToNewsArticle(docSnap, docSnap.id);
       }
-      return null;
-    } catch (error) {
-      console.error(`Error fetching news by ID (${id}):`, error);
-      return null;
-    }
+    } catch (e) { }
+
+    return null;
   },
 
-  // Fetch article by slug
+  /**
+   * Fetch article by slug from PostgreSQL REST API
+   */
   async getNewsBySlug(slug: string): Promise<NewsArticle | null> {
-    try {
-      const res = await this.getPublishedNews({ limitNum: 1000 });
-      const article = res.articles.find(a => a.slug === slug || a.id === slug || a._id === slug);
-      if (article) {
-        return article;
-      }
-      const newsColRef = collection(db, NEWS_COLLECTION);
-      const querySnapshot = await getDocs(newsColRef);
-      const docSnap = querySnapshot.docs.find(d => d.data().slug === slug || d.id === slug);
-
-      if (docSnap) {
-        return mapDocToNewsArticle(docSnap, docSnap.id);
-      }
-      return null;
-    } catch (error) {
-      console.error(`Error fetching news by slug (${slug}):`, error);
-      return null;
-    }
+    return this.getNewsById(slug);
   },
 
-  // Fetch news by category
   async getNewsByCategory(category: string, language?: string, limitNum = 12): Promise<NewsResponse> {
     return this.getPublishedNews({ category, language, limitNum });
   },
 
-  // Fetch news by topic
   async getNewsByTopic(topic: string, language?: string, limitNum = 12): Promise<NewsResponse> {
     return this.getPublishedNews({ topic, language, limitNum });
   },
 
-  // Fetch news by language
   async getNewsByLanguage(language: string, limitNum = 12): Promise<NewsResponse> {
     return this.getPublishedNews({ language, limitNum });
   },
 
-  // Fetch featured news
   async getFeaturedNews(language?: string, limitNum = 6): Promise<NewsResponse> {
     return this.getPublishedNews({ language, limitNum });
   },
 
-  // Fetch trending news
   async getTrendingNews(language?: string, limitNum = 10): Promise<NewsResponse> {
     return this.getPublishedNews({ language, limitNum });
   },
 
-  // Fetch most read news
   async getMostReadNews(language?: string, limitNum = 10): Promise<NewsResponse> {
     return this.getTrendingNews(language, limitNum);
   },
 
-  // Search service
+  /**
+   * Search service via PostgreSQL REST API
+   */
   async searchNews(searchQuery: string, language?: string, limitNum = 20): Promise<NewsResponse> {
     if (!searchQuery || !searchQuery.trim()) {
       return { total: 0, page: 1, limit: limitNum, articles: [] };
     }
 
+    const queryParams = new URLSearchParams();
+    queryParams.append('search', searchQuery.trim());
+    queryParams.append('limit', limitNum.toString());
+    if (language) queryParams.append('language', language);
+
     try {
-      const publishedRes = await this.getPublishedNews({ language, limitNum: 50 });
-      const qLower = searchQuery.toLowerCase().trim();
-
-      const matched = publishedRes.articles.filter(article => {
-        return (
-          article.title.toLowerCase().includes(qLower) ||
-          article.description.toLowerCase().includes(qLower) ||
-          article.keywords.some(k => k.toLowerCase().includes(qLower)) ||
-          article.tags.some(t => t.toLowerCase().includes(qLower)) ||
-          article.category.toLowerCase().includes(qLower) ||
-          article.topic.toLowerCase().includes(qLower)
-        );
-      });
-
-      return {
-        total: matched.length,
-        page: 1,
-        limit: limitNum,
-        articles: matched.slice(0, limitNum)
-      };
-    } catch (error) {
-      console.error('Error performing search:', error);
-      return { total: 0, page: 1, limit: limitNum, articles: [] };
+      const res = await fetch(`${API_BASE_URL}/news?${queryParams.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        return {
+          total: data.total || 0,
+          page: data.page || 1,
+          limit: data.limit || limitNum,
+          articles: data.articles || []
+        };
+      }
+    } catch (err) {
+      console.warn('PostgreSQL API searchNews notice:', err);
     }
+
+    return this.getPublishedNews({ language, limitNum });
   },
 
-  // Safely increment article views using atomic Firestore increment
+  /**
+   * Increment article views in PostgreSQL REST API + Firestore
+   */
   async incrementNewsViews(id: string): Promise<void> {
     if (!id) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/news/${encodeURIComponent(id)}/views`, {
+        method: 'PATCH'
+      });
+    } catch (e) { }
+
     try {
       const docRef = doc(db, NEWS_COLLECTION, id);
       await updateDoc(docRef, {
         views: increment(1)
       });
-    } catch (error) {
-      console.error(`Error incrementing views for article ${id}:`, error);
-    }
+    } catch (e) { }
   },
 
-  // Get related news excluding current article ID
   async getRelatedNews(article: NewsArticle, limitNum = 4): Promise<NewsArticle[]> {
     try {
       const categoryRes = await this.getNewsByCategory(article.category, article.language, limitNum + 2);
       const filtered = categoryRes.articles.filter(a => a._id !== article._id && a.slug !== article.slug);
       return filtered.slice(0, limitNum);
     } catch (error) {
-      console.error('Error fetching related news:', error);
       return [];
     }
   }

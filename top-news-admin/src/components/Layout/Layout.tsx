@@ -26,12 +26,12 @@ const Layout: React.FC = () => {
       {/* Quick Create Floating Action Button (FAB) */}
       <button
         onClick={() => navigate('/news/create')}
-        className="fixed bottom-8 right-8 w-14 h-14 bg-[#0058be] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group"
-        title="Quick Create"
+        className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-full shadow-2xl shadow-indigo-600/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group border-2 border-white/30 cursor-pointer"
+        title="Quick Create News"
       >
         <Plus className="w-7 h-7" />
-        <span className="absolute right-full mr-4 bg-[#2e3132] text-white px-3 py-1.5 rounded-md text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-md">
-          Quick Create News
+        <span className="absolute right-full mr-4 bg-slate-900 text-white px-3 py-1.5 rounded-xl text-xs font-bold opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl border border-slate-700">
+          Quick Create News Article
         </span>
       </button>
 

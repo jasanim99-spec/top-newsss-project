@@ -26,6 +26,8 @@ export const Settings: React.FC = () => {
     faviconUrl: '/logo.png',
     siteName: 'TOP NEWS',
     siteTagline: 'Breaking News, Latest Updates & Current Affairs',
+    adminUrl: 'http://localhost:5173',
+    mainWebsiteUrl: 'http://localhost:8080',
     masterKey: 'TOPNEWS2026'
   });
 
@@ -160,26 +162,32 @@ export const Settings: React.FC = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-4 space-y-8">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-200/80 shadow-sm">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-[#0058be]/10 flex items-center justify-center text-[#0058be]">
-            <SettingsIcon className="w-6 h-6" />
+    <div className="space-y-8">
+      {/* Dynamic Vibrant Header */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 md:p-8 shadow-xl border border-indigo-800/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 flex-shrink-0">
+            <SettingsIcon className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">System & Branding Settings</h1>
-            <p className="text-xs font-semibold text-gray-500 mt-0.5">Manage Website Logo, Favicon, Site Info, and Security Key</p>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[10px] font-extrabold tracking-wider uppercase rounded-full shadow-sm">
+                BRANDING & CONFIGURATION
+              </span>
+            </div>
+            <h1 className="text-3xl font-black text-white tracking-tight">System & Branding Settings</h1>
+            <p className="text-slate-300 text-sm font-medium mt-0.5">Manage Website Logo, Favicon, Site Info, and Security Credentials.</p>
           </div>
         </div>
 
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#0058be] hover:bg-[#004395] text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50"
+          className="relative z-10 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold text-xs shadow-lg shadow-blue-500/25 active:scale-95 transition-all disabled:opacity-50 cursor-pointer shrink-0"
         >
           {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          <span>{saving ? 'Saving...' : 'Save All Settings'}</span>
+          <span>{saving ? 'Saving Settings...' : 'Save All Settings'}</span>
         </button>
       </div>
 
@@ -383,6 +391,34 @@ export const Settings: React.FC = () => {
                 placeholder="Breaking News & Latest Updates"
               />
             </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                Main Website URL
+              </label>
+              <input
+                type="url"
+                value={settings.mainWebsiteUrl || 'http://localhost:8080'}
+                onChange={(e) => setSettings({ ...settings, mainWebsiteUrl: e.target.value })}
+                className="block w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be]"
+                placeholder="http://localhost:8080"
+              />
+              <p className="text-[11px] text-gray-500 mt-1">Live user-facing news website URL.</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                Admin Panel URL
+              </label>
+              <input
+                type="url"
+                value={settings.adminUrl || 'http://localhost:5173'}
+                onChange={(e) => setSettings({ ...settings, adminUrl: e.target.value })}
+                className="block w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be]"
+                placeholder="http://localhost:5173"
+              />
+              <p className="text-[11px] text-gray-500 mt-1">Admin console URL for editorial staff.</p>
+            </div>
           </div>
         </div>
 
@@ -417,37 +453,12 @@ export const Settings: React.FC = () => {
           </div>
         </div>
 
-        {/* Section 4: Data Cache & Local Storage Management */}
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm space-y-4">
-          <div className="flex items-center gap-2.5 pb-4 border-b border-gray-100">
-            <Database className="w-5 h-5 text-[#0058be]" />
-            <h2 className="text-lg font-bold text-gray-900">Data Cache & Local Storage Reset</h2>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-amber-50/60 p-4 rounded-xl border border-amber-200/80">
-            <div>
-              <h3 className="text-sm font-bold text-amber-900">Clear Stale Local Storage Cache</h3>
-              <p className="text-xs text-amber-800/80 mt-0.5">
-                If the admin panel shows old cached data from previous sessions, click here to clear local storage and reload fresh real-time data from Firestore.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleClearCache}
-              className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>Clear Local Storage Cache</span>
-            </button>
-          </div>
-        </div>
-
         {/* Bottom Save Action */}
         <div className="flex justify-end pt-2">
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 px-8 py-3 bg-[#0058be] hover:bg-[#004395] text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/25 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
           >
             {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             <span>{saving ? 'Saving Changes...' : 'Save All Settings'}</span>

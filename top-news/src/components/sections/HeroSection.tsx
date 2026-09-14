@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { NewsCard } from '@/components/news/NewsCard';
-import { newsAPI } from '@/services/api';
+import { newsService } from '@/services/newsService';
 import { useNewsStore } from '@/store/newsStore';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -11,8 +11,15 @@ export function HeroSection() {
 
   const { data: newsData, isLoading } = useQuery({
     queryKey: ['featured-news', currentLanguage],
-    queryFn: () => newsAPI.getFeaturedNews(currentLanguage),
+    queryFn: async () => {
+      let res = await newsService.getPublishedNews({ section: 'featured', language: currentLanguage, limitNum: 6 });
+      if (!res.articles || res.articles.length === 0) {
+        res = await newsService.getPublishedNews({ language: currentLanguage, limitNum: 6 });
+      }
+      return res;
+    },
     staleTime: 0,
+    refetchInterval: 5000,
   });
 
   useEffect(() => {
@@ -40,7 +47,7 @@ export function HeroSection() {
   }
 
   return (
-    <section className="relative mb-12">
+    <section className="relative pt-2 lg:pt-3 mb-12">
       <div className="news-container">
         <motion.div
           initial={{ opacity: 0 }}

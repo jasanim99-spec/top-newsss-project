@@ -18,6 +18,7 @@ import TermsOfUse from "./pages/TermsOfUse"
 import Sitemap from "./pages/Sitemap"
 
 import { useEffect } from 'react';
+import { initSocketClient } from '@/services/socketService';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firestore';
 
@@ -32,6 +33,8 @@ const queryClient = new QueryClient({
 
 function SiteSettingsManager() {
   useEffect(() => {
+    initSocketClient();
+
     const applyFavicon = (url?: string) => {
       if (!url) return;
       try {
@@ -108,6 +111,43 @@ function SiteSettingsManager() {
   return null;
 }
 
+function AdminRedirect() {
+  const getTargetUrl = () => {
+    try {
+      const cached = localStorage.getItem('topnews_site_settings');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.adminUrl) return parsed.adminUrl;
+      }
+    } catch (e) {}
+    return import.meta.env.VITE_ADMIN_URL || "http://localhost:5173";
+  };
+
+  useEffect(() => {
+    window.location.href = getTargetUrl();
+  }, []);
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+      <div className="text-center p-8 bg-white rounded-2xl shadow-lg border border-gray-200 max-w-md w-full">
+        <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Redirecting to Admin Portal...</h2>
+        <p className="text-xs text-gray-500 mb-6">Connecting to Top News Admin Console ({getTargetUrl()})</p>
+        <a
+          href={getTargetUrl()}
+          className="inline-flex items-center justify-center w-full px-5 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 transition-all shadow-sm"
+        >
+          Click Here if Not Redirected
+        </a>
+      </div>
+    </div>
+  );
+}
+
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
@@ -118,8 +158,14 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/admin" element={<AdminRedirect />} />
             <Route path="/article/:language/:category/:topic/:slug" element={<ArticlePage />} />
+            <Route path="/article/:category/:topic/:slug" element={<ArticlePage />} />
+            <Route path="/article/:category/:slug" element={<ArticlePage />} />
+            <Route path="/article/:slug" element={<ArticlePage />} />
             <Route path="/video/:language/:category/:topic/:slug" element={<VideoPage />} />
+            <Route path="/video/:category/:slug" element={<VideoPage />} />
+            <Route path="/video/:slug" element={<VideoPage />} />
             <Route path="/category/:category" element={<CategoryPage />} />
             <Route path="/videos" element={<VideoPage />} />
             <Route path="/search" element={<SearchPage />} />

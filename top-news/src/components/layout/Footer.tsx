@@ -234,6 +234,7 @@ export function Footer() {
   const [logoUrl, setLogoUrl] = useState('/logo.png');
   const [siteName, setSiteName] = useState('Top News');
 
+
   useEffect(() => {
     const cached = localStorage.getItem('topnews_site_settings');
     if (cached) {
@@ -428,6 +429,7 @@ export function Footer() {
                 <a href="/contact" className="text-gray-400 hover:text-white transition-colors duration-200 hover:underline decoration-red-500">
                   Contact Us
                 </a>
+
               </div>
             </div>
           </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Plus, Eye, Edit, Trash2, Calendar, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Calendar, CheckCircle2, XCircle, Star } from 'lucide-react';
 import { newsService } from '@/services/newsService';
 import { NewsArticle, getLanguageName } from '@/types';
 import SearchAndFilter from '@/components/Common/SearchAndFilter';
@@ -15,11 +15,9 @@ const NewsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [filteredArticles, setFilteredArticles] = useState<NewsArticle[]>([]);
-
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['news', page, selectedLanguage, selectedCategory],
     queryFn: () => newsService.getNews({
       page,
@@ -28,6 +26,8 @@ const NewsList: React.FC = () => {
       category: selectedCategory || undefined,
       status: 'all'
     }),
+    staleTime: 0,
+    refetchInterval: 2000,
   });
 
   const deleteMutation = useMutation({
@@ -61,28 +61,41 @@ const NewsList: React.FC = () => {
     }
   });
 
-  useEffect(() => {
-    if (data?.articles) {
-      let filtered = data.articles;
-      
-      if (searchTerm) {
-        filtered = filtered.filter(
-          article =>
-            article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            article.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            article.keywords.some(keyword => 
-              keyword.toLowerCase().includes(searchTerm.toLowerCase())
-            )
-        );
-      }
-      
-      setFilteredArticles(filtered);
+  const toggleHeroMutation = useMutation({
+    mutationFn: async ({ id, isHero }: { id: string; isHero: boolean }) => {
+      return newsService.updateNews(id, { section: isHero ? 'main' : 'featured' });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['news'] });
+      queryClient.invalidateQueries({ queryKey: ['news-stats'] });
+      toast.success(variables.isHero ? 'Removed from Hero Section' : '⭐ Set as Hero Section Article!');
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Failed to update section');
     }
-  }, [data?.articles, searchTerm]);
+  });
+
+  const articlesList = data?.articles || [];
+  const [filteredArticles, setFilteredArticles] = useState<NewsArticle[]>([]);
+
+  useEffect(() => {
+    const list = data?.articles || [];
+    if (searchTerm.trim()) {
+      setFilteredArticles(
+        list.filter(
+          article =>
+            (article.title || '').toLowerCase().includes(searchTerm.toLowerCase().trim()) ||
+            (article.description || '').toLowerCase().includes(searchTerm.toLowerCase().trim()) ||
+            (Array.isArray(article.keywords) && article.keywords.some(k => k.toLowerCase().includes(searchTerm.toLowerCase().trim())))
+        )
+      );
+    } else {
+      setFilteredArticles(list);
+    }
+  }, [data, searchTerm]);
 
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this news article and its media files?')) {
-      setFilteredArticles(prev => prev.filter(a => a._id !== id && a.id !== id));
       deleteMutation.mutate(id);
     }
   };
@@ -95,14 +108,24 @@ const NewsList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">News Management</h1>
+      {/* Dynamic Vibrant Header */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 md:p-8 shadow-xl border border-indigo-800/40 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[10px] font-extrabold tracking-wider uppercase rounded-full shadow-sm">
+              EDITORIAL PUBLISHING DESK
+            </span>
+          </div>
+          <h1 className="text-3xl font-black text-white tracking-tight">News Management</h1>
+          <p className="text-slate-300 text-sm font-medium max-w-2xl">Browse, edit, publish or manage all news articles across all media channels.</p>
+        </div>
         <Link
           to="/news/create"
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="relative z-10 inline-flex items-center justify-center px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl active:scale-95 transition-all font-bold text-xs shadow-lg shadow-blue-500/25 gap-2 shrink-0 cursor-pointer"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Create News
+          <Plus className="w-4.5 h-4.5" />
+          <span>Create News Article</span>
         </Link>
       </div>
 
@@ -117,63 +140,79 @@ const NewsList: React.FC = () => {
 
       <div className="grid gap-6">
         {filteredArticles.length === 0 ? (
-          <div className="bg-white p-12 text-center rounded-lg border text-gray-500">
+          <div className="bg-white p-12 text-center rounded-2xl border border-slate-200/80 text-slate-500 font-medium shadow-sm">
             No news articles found.
           </div>
         ) : (
           filteredArticles.map((article, index) => {
             const articleId = article._id || article.id || '';
             const isPublished = article.status === 'published';
+            const isHero = article.section === 'featured';
 
             return (
               <motion.div
                 key={articleId}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow"
+                transition={{ delay: index * 0.05 }}
+                className={`p-6 rounded-2xl transition-all relative overflow-hidden ${
+                  isHero
+                    ? 'bg-gradient-to-r from-amber-50/90 via-orange-50/40 to-amber-50/80 border-2 border-amber-400 shadow-md ring-4 ring-amber-400/20'
+                    : 'bg-white border border-slate-200/80 shadow-sm hover:shadow-md hover:border-slate-300'
+                }`}
               >
+                {isHero && (
+                  <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600 text-white text-[10px] font-black px-4 py-1 rounded-bl-xl uppercase tracking-wider shadow-sm flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-white" /> {getLanguageName(article.language).toUpperCase()} HERO
+                  </div>
+                )}
+
                 <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-6">
                   {article.imageUrl ? (
                     <img
                       src={article.imageUrl}
                       alt={article.title}
-                      className="w-full lg:w-48 h-32 object-cover rounded-lg mb-4 lg:mb-0 flex-shrink-0"
+                      className="w-full lg:w-48 h-32 object-cover rounded-xl mb-4 lg:mb-0 flex-shrink-0 border border-slate-100"
                     />
                   ) : (
-                    <div className="w-full lg:w-48 h-32 bg-gray-100 rounded-lg mb-4 lg:mb-0 flex items-center justify-center text-gray-400">
-                      No Image
+                    <div className="w-full lg:w-48 h-32 bg-slate-100 rounded-xl mb-4 lg:mb-0 flex items-center justify-center text-slate-400 font-medium text-xs">
+                      No Image Available
                     </div>
                   )}
                   
                   <div className="flex-1 space-y-3">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
+                      {isHero && (
+                        <span className="px-3 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs rounded-full font-black tracking-wide flex items-center gap-1 shadow-sm">
+                          <Star className="w-3.5 h-3.5 fill-white" /> ⭐ {getLanguageName(article.language).toUpperCase()} HERO
+                        </span>
+                      )}
+                      <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200/60 text-xs rounded-full font-medium">
                         {getLanguageName(article.language)}
                       </span>
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                      <span className="px-2.5 py-0.5 bg-purple-50 text-purple-700 border border-purple-200/60 text-xs rounded-full font-medium">
                         {article.category}
                       </span>
-                      <span className={`px-2 py-1 text-xs rounded-full font-semibold ${isPublished ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                      <span className={`px-2.5 py-0.5 text-xs rounded-full font-semibold border ${isPublished ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : 'bg-amber-50 text-amber-700 border-amber-200/60'}`}>
                         {isPublished ? 'Published' : 'Draft'}
                       </span>
                     </div>
                     
-                    <h3 className="text-xl font-semibold text-gray-900 line-clamp-2">
+                    <h3 className="text-lg font-bold text-slate-900 line-clamp-2 leading-snug">
                       {article.title}
                     </h3>
                     
-                    <p className="text-gray-600 line-clamp-2 text-sm">
+                    <p className="text-slate-600 line-clamp-2 text-sm font-medium leading-relaxed">
                       {article.description}
                     </p>
                     
-                    <div className="flex items-center text-xs text-gray-500 space-x-4">
+                    <div className="flex items-center text-xs text-slate-500 font-medium space-x-4 pt-1">
                       <div className="flex items-center">
-                        <Calendar className="w-3.5 h-3.5 mr-1" />
-                        {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : ''}
+                        <Calendar className="w-3.5 h-3.5 mr-1 text-slate-400" />
+                        {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : 'N/A'}
                       </div>
                       <div className="flex items-center">
-                        <Eye className="w-3.5 h-3.5 mr-1" />
+                        <Eye className="w-3.5 h-3.5 mr-1 text-slate-400" />
                         {(article.views || 0).toLocaleString()} views
                       </div>
                     </div>
@@ -181,38 +220,52 @@ const NewsList: React.FC = () => {
                   
                   <div className="flex flex-row lg:flex-col gap-2 mt-4 lg:mt-0">
                     <button
+                      onClick={() => toggleHeroMutation.mutate({ id: articleId, isHero })}
+                      disabled={toggleHeroMutation.isPending}
+                      className={`flex items-center justify-center px-3.5 py-2 rounded-xl transition-all text-xs font-bold cursor-pointer ${
+                        isHero
+                          ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-md'
+                          : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-300/80'
+                      }`}
+                      title={isHero ? 'Remove from Hero Section' : 'Set as Hero Section Article'}
+                    >
+                      <Star className={`w-4 h-4 mr-1.5 ${isHero ? 'fill-white' : 'text-amber-600'}`} />
+                      <span>{isHero ? 'Hero Active' : 'Set as Hero'}</span>
+                    </button>
+
+                    <button
                       onClick={() => togglePublishMutation.mutate({ id: articleId, currentStatus: article.status })}
-                      className={`flex items-center justify-center px-3 py-2 rounded-lg transition-colors text-xs font-medium ${
-                        isPublished ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                      className={`flex items-center justify-center px-3.5 py-2 rounded-xl transition-all text-xs font-semibold cursor-pointer ${
+                        isPublished ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
                       }`}
                       disabled={togglePublishMutation.isPending}
                     >
-                      {isPublished ? <XCircle className="w-4 h-4 mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
+                      {isPublished ? <XCircle className="w-4 h-4 mr-1.5" /> : <CheckCircle2 className="w-4 h-4 mr-1.5" />}
                       <span>{isPublished ? 'Unpublish' : 'Publish'}</span>
                     </button>
 
                     <Link
                       to={`/news/${articleId}/view`}
-                      className="flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-medium"
+                      className="flex items-center justify-center px-3.5 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all text-xs font-semibold"
                     >
-                      <Eye className="w-4 h-4 mr-1" />
+                      <Eye className="w-4 h-4 mr-1.5" />
                       <span>View</span>
                     </Link>
                     
                     <Link
                       to={`/news/${articleId}/edit`}
-                      className="flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-xs font-medium"
+                      className="flex items-center justify-center px-3.5 py-2 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-xl hover:bg-blue-100 transition-all text-xs font-semibold"
                     >
-                      <Edit className="w-4 h-4 mr-1" />
+                      <Edit className="w-4 h-4 mr-1.5" />
                       <span>Edit</span>
                     </Link>
                     
                     <button
                       onClick={() => handleDelete(articleId)}
-                      className="flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-xs font-medium"
+                      className="flex items-center justify-center px-3.5 py-2 bg-rose-50 text-rose-700 border border-rose-200/60 rounded-xl hover:bg-rose-100 transition-all text-xs font-semibold cursor-pointer"
                       disabled={deleteMutation.isPending}
                     >
-                      <Trash2 className="w-4 h-4 mr-1" />
+                      <Trash2 className="w-4 h-4 mr-1.5" />
                       <span>Delete</span>
                     </button>
                   </div>

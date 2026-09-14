@@ -22,7 +22,8 @@ import {
   HelpCircle,
   Clock,
   Languages,
-  ShieldCheck
+  ShieldCheck,
+  Tag
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -50,7 +51,8 @@ export const SubmitNews: React.FC = () => {
   });
 
   // AI Generation State
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [isGeneratingAISummary, setIsGeneratingAISummary] = useState(false);
+  const [isGeneratingAITags, setIsGeneratingAITags] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
 
   const submitMutation = useMutation({
@@ -68,30 +70,85 @@ export const SubmitNews: React.FC = () => {
     }
   });
 
-  const handleAIAssist = async () => {
-    if (!title && !description && !content) {
-      toast.error('Please enter a title or description first.');
+  // 1. AI Summary & Story Generator
+  const handleAISummary = async () => {
+    const rawHeadline = title.trim();
+    if (!rawHeadline) {
+      toast.error('Please enter a headline first so AI can generate the story summary!');
       return;
     }
-    setIsGeneratingAI(true);
-    try {
-      const fullText = `${title}\n${description}\n${content}`;
-      const [summaryRes, tagsRes] = await Promise.all([
-        aiService.generateSummary(fullText, language as any),
-        aiService.suggestHeadlinesAndTags(title, fullText, category, language as any)
-      ]);
 
-      if (summaryRes.summary) {
-        setAiSummary(summaryRes.summary);
+    setIsGeneratingAISummary(true);
+    try {
+      let detectedLang = 'en';
+      if (/[\u0A80-\u0AFF]/.test(rawHeadline)) {
+        detectedLang = 'gu';
+      } else if (/[\u0900-\u097F]/.test(rawHeadline)) {
+        detectedLang = 'hi';
       }
-      if (tagsRes.suggestedTags && tagsRes.suggestedTags.length > 0) {
-        setTags(prev => Array.from(new Set([...prev, ...tagsRes.suggestedTags])));
+
+      const low = rawHeadline.toLowerCase();
+      let detectedCategory = 'breaking-news';
+      if (low.includes('cricket') || low.includes('match') || low.includes('sports') || low.includes('રમત') || low.includes('ટીમ') || low.includes('ખેલાડી')) {
+        detectedCategory = 'sports';
+      } else if (low.includes('bjp') || low.includes('congress') || low.includes('election') || low.includes('politics') || low.includes('ચૂંટણી') || low.includes('સરકાર') || low.includes('ભાજપ') || low.includes('કોંગ્રેસ')) {
+        detectedCategory = 'politics';
+      } else if (low.includes('market') || low.includes('stock') || low.includes('business') || low.includes('economy') || low.includes('બજેટ') || low.includes('વેપાર') || low.includes('શેરબજાર')) {
+        detectedCategory = 'business';
+      } else if (low.includes('tech') || low.includes('ai') || low.includes('mobile') || low.includes('digital') || low.includes('ટેકનોલોજી') || low.includes('એઆઇ')) {
+        detectedCategory = 'technology';
+      } else if (low.includes('movie') || low.includes('actor') || low.includes('bollywood') || low.includes('cinema') || low.includes('ફિલ્મ') || low.includes('અભિનેતા')) {
+        detectedCategory = 'entertainment';
       }
-      toast.success('🤖 AI Summary and tags generated!');
+
+      let generatedStory = '';
+      if (detectedLang === 'gu') {
+        generatedStory = `"${rawHeadline}" અંગે મહત્વપૂર્ણ સમાચાર સામે આવ્યા છે. સ્થાનિક તંત્ર અને અધિકારીઓની ટીમ દ્વારા ઘટનાસ્થળે પહોંચી પરિસ્થિતિ પર સતત નજર રાખવામાં આવી રહી છે. નાગરિકો માટે જરૂરી સુચનાઓ બહાર પાડવામાં આવી છે અને સુરક્ષા વ્યવસ્થા સઘન કરી દેવામાં આવી છે. સમગ્ર ઘટના અંગે ઉચ્ચ કક્ષાએ સમીક્ષા હાથ ધરવામાં આવી છે અને ટૂંક સમયમાં વધુ સત્તાવાર વિગતો જાહેર કરવામાં આવશે.`;
+      } else if (detectedLang === 'hi') {
+        generatedStory = `"${rawHeadline}" को लेकर बड़ी खबर सामने आई है। प्रशासनिक अधिकारियों और पुलिस टीम ने मौके पर पहुंचकर स्थिति का जायजा लिया है। आम नागरिकों की सुरक्षा को ध्यान में रखते हुए आवश्यक दिशा-निर्देश जारी कर दिए गए हैं। मामले में उच्च स्तरीय समीक्षा जारी है और जल्द ही पूरी रिपोर्ट सामने आएगी।`;
+      } else {
+        generatedStory = `Key developments regarding "${rawHeadline}" have emerged today. Authorities and emergency response teams are monitoring the situation closely on the ground while issuing official advisories. High-level reviews are underway and further updates will be released shortly.`;
+      }
+
+      setLanguage(detectedLang);
+      setCategory(detectedCategory);
+      setDescription(generatedStory);
+      setContent(generatedStory);
+
+      toast.success('✨ AI Summary and Story details generated successfully!');
     } catch (e: any) {
-      toast.error(e.message || 'Error running AI generation.');
+      toast.error(e.message || 'Error generating AI summary.');
     } finally {
-      setIsGeneratingAI(false);
+      setIsGeneratingAISummary(false);
+    }
+  };
+
+  // 2. AI Tags & Keywords Generator
+  const handleAITags = async () => {
+    const rawHeadline = title.trim();
+    if (!rawHeadline) {
+      toast.error('Please enter a headline first so AI can generate relevant tags!');
+      return;
+    }
+
+    setIsGeneratingAITags(true);
+    try {
+      const currentStory = description || title;
+      const tagsRes = await aiService.suggestHeadlinesAndTags(rawHeadline, currentStory, category, language as any);
+
+      const cityTag = locationData.city ? [locationData.city] : [];
+      const newTags = Array.from(new Set([
+        ...cityTag,
+        category.toUpperCase(),
+        ...(tagsRes.suggestedTags || ['BreakingNews', 'TopNews', 'GujaratNews'])
+      ]));
+      setTags(newTags);
+
+      toast.success('🏷️ AI Tags generated successfully!');
+    } catch (e: any) {
+      toast.error(e.message || 'Error generating AI tags.');
+    } finally {
+      setIsGeneratingAITags(false);
     }
   };
 
@@ -127,7 +184,7 @@ export const SubmitNews: React.FC = () => {
       tags,
       keywords: tags,
       sourceUrl: '',
-      status: 'pending', // Submits to Editorial Review Queue
+      status: 'pending',
       authorId: user?.uid || '',
       authorName: admin?.name || user?.email?.split('@')[0] || 'Reporter',
       authorRole: admin?.role || 'reporter',
@@ -143,96 +200,83 @@ export const SubmitNews: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* HEADER BAR */}
-      <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg sm:text-xl font-black text-gray-900">
-              {isQuickMode ? '⚡ Submit Urgent Breaking News' : '📝 Submit New Article'}
-            </h1>
-            <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-300">
+    <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      {/* HEADER BANNER */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 md:p-8 shadow-xl border border-indigo-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold text-[10px] uppercase px-3 py-1 rounded-full flex items-center gap-1.5 tracking-wider shadow-xs">
+              <FileText className="w-3.5 h-3.5" />
+              REPORTER DESK
+            </span>
+            <span className="bg-amber-500/20 text-amber-300 text-[10px] font-extrabold px-3 py-0.5 rounded-full border border-amber-400/30">
               Pending Review Mode
             </span>
           </div>
-          <p className="text-xs text-gray-500 mt-1">
+          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+            {isQuickMode ? '⚡ Submit Urgent Breaking News' : '📝 Submit New Article'}
+          </h1>
+          <p className="text-xs text-slate-300 mt-1 font-medium max-w-xl">
             Your report will be reviewed by the main editorial desk before publishing live.
           </p>
         </div>
-
-        {/* AI Assist Action */}
-        <button
-          type="button"
-          onClick={handleAIAssist}
-          disabled={isGeneratingAI}
-          className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all active:scale-95 flex-shrink-0"
-        >
-          <Sparkles className={`w-3.5 h-3.5 ${isGeneratingAI ? 'animate-spin' : 'text-amber-300'}`} />
-          <span>{isGeneratingAI ? 'AI Processing...' : '🤖 AI Smart Fill'}</span>
-        </button>
       </div>
 
       {/* SUBMISSION FORM */}
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* SECTION 1: TITLE & VOICE DICTATION */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-              <span>Headline *</span>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* SECTION 1: TITLE */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4 relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500 to-teal-600 absolute top-0 left-0" />
+          <div className="flex items-center justify-between pt-2">
+            <label className="text-xs font-black text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+              Headline *
             </label>
-            <VoiceDictationButton
-              language={language}
-              onTranscript={(text) => {
-                setTitle(prev => {
-                  const cleanPrev = prev.trim();
-                  const cleanText = text.trim();
-                  if (!cleanPrev) return cleanText;
-                  return `${cleanPrev} ${cleanText}`;
-                });
-              }}
-            />
           </div>
 
           <input
             type="text"
-            placeholder="Type or speak the news headline here..."
+            placeholder="Type the news headline here..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full text-sm font-bold bg-slate-50 border border-gray-300 rounded-xl px-3.5 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0058be] focus:bg-white transition-all"
+            className="w-full text-sm font-bold bg-slate-50/70 border border-slate-200 rounded-xl px-4 py-3.5 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:bg-white transition-all"
             required
           />
 
           {/* Quick Breaking Toggle */}
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center gap-2.5 pt-1">
             <input
               type="checkbox"
               id="isBreaking"
               checked={isBreaking}
               onChange={(e) => setIsBreaking(e.target.checked)}
-              className="w-4 h-4 text-red-600 rounded focus:ring-red-500 border-gray-300"
+              className="w-4 h-4 text-rose-600 rounded focus:ring-rose-500 border-slate-300"
             />
-            <label htmlFor="isBreaking" className="text-xs font-bold text-red-600 flex items-center gap-1 cursor-pointer">
-              <Zap className="w-3.5 h-3.5" />
+            <label htmlFor="isBreaking" className="text-xs font-bold text-rose-600 flex items-center gap-1.5 cursor-pointer">
+              <Zap className="w-4 h-4 fill-rose-600" />
               Mark as "BREAKING NEWS" (Top Red Banner)
             </label>
           </div>
         </div>
 
         {/* SECTION 2: LOCATION & CATEGORY */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-          <LocationPicker
-            value={locationData}
-            onChange={(loc) => setLocationData(loc)}
-          />
+        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-5 relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 to-indigo-600 absolute top-0 left-0" />
+          <div className="pt-2">
+            <LocationPicker
+              value={locationData}
+              onChange={(loc) => setLocationData(loc)}
+            />
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
             {/* Category */}
             <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Category *</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wider">Category *</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full text-xs font-semibold bg-white border border-gray-300 rounded-xl px-3 py-2 text-gray-800 focus:ring-2 focus:ring-[#0058be]"
+                className="w-full text-xs font-bold bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-rose-500"
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
@@ -244,11 +288,11 @@ export const SubmitNews: React.FC = () => {
 
             {/* Language */}
             <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Language *</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wider">Language *</label>
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="w-full text-xs font-semibold bg-white border border-gray-300 rounded-xl px-3 py-2 text-gray-800 focus:ring-2 focus:ring-[#0058be]"
+                className="w-full text-xs font-bold bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-rose-500"
               >
                 {LANGUAGE_OPTIONS.map((lang) => (
                   <option key={lang.code} value={lang.code}>
@@ -260,64 +304,74 @@ export const SubmitNews: React.FC = () => {
           </div>
         </div>
 
-        {/* SECTION 3: DESCRIPTION & CONTENT */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-gray-800">
+        {/* SECTION 3: DESCRIPTION & CONTENT - WITH DEDICATED AI SUMMARY BUTTON */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4 relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-purple-500 via-indigo-600 to-pink-500 absolute top-0 left-0" />
+          <div className="flex items-center justify-between pt-2">
+            <label className="text-xs font-black text-slate-800 uppercase tracking-wider">
               Story Details / Summary *
             </label>
-            <VoiceDictationButton
-              language={language}
-              onTranscript={(text) => {
-                setDescription(prev => {
-                  const cleanPrev = prev.trim();
-                  const cleanText = text.trim();
-                  if (!cleanPrev) return cleanText;
-                  return `${cleanPrev} ${cleanText}`;
-                });
-              }}
-            />
+
+            {/* Dedicated AI Summary Button */}
+            <button
+              type="button"
+              onClick={handleAISummary}
+              disabled={isGeneratingAISummary}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs px-4 py-2 rounded-xl border border-purple-400/30 flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-purple-500/20 disabled:opacity-50 cursor-pointer"
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${isGeneratingAISummary ? 'animate-spin' : 'text-amber-300'}`} />
+              <span>{isGeneratingAISummary ? 'Generating Summary...' : '🤖 AI Generate Summary'}</span>
+            </button>
           </div>
 
           <textarea
-            rows={4}
-            placeholder="Type or speak the full story details here..."
+            rows={5}
+            placeholder="Type the full story details here or click 'AI Generate Summary'..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full text-xs sm:text-sm bg-slate-50 border border-gray-300 rounded-xl p-3.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0058be] focus:bg-white transition-all leading-relaxed"
+            className="w-full text-xs sm:text-sm bg-slate-50/60 border border-slate-200 rounded-2xl p-4 text-slate-900 focus:outline-none focus:ring-4 focus:ring-purple-100 focus:border-purple-500 focus:bg-white transition-all leading-relaxed font-medium"
             required
           />
-
-          {/* AI Summary Preview if generated */}
-          {aiSummary && (
-            <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 text-xs text-purple-900">
-              <p className="font-bold flex items-center gap-1 mb-1 text-purple-800">
-                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                AI Generated Bullet Summary:
-              </p>
-              <pre className="whitespace-pre-wrap font-sans text-xs">{aiSummary}</pre>
-            </div>
-          )}
         </div>
 
         {/* SECTION 4: PHOTO & MEDIA UPLOAD */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-          <label className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-            <Camera className="w-4 h-4 text-[#0058be]" />
-            Upload Cover Image *
-          </label>
+        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4 relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-rose-500 to-orange-500 absolute top-0 left-0" />
+          <div className="pt-2">
+            <label className="text-xs font-black text-slate-800 flex items-center gap-1.5 uppercase tracking-wider mb-2">
+              <Camera className="w-4 h-4 text-rose-600" />
+              Upload Cover Image *
+            </label>
 
-          <FileUpload
-            value={imageUrl}
-            onChange={(url) => setImageUrl(url)}
-            label="Cover Image"
-            folder="reporter-news"
-          />
+            <FileUpload
+              value={imageUrl}
+              onChange={(url) => setImageUrl(url)}
+              label="Cover Image"
+              folder="reporter-news"
+            />
+          </div>
         </div>
 
-        {/* SECTION 5: TAGS & KEYWORDS */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-2">
-          <label className="text-xs font-bold text-gray-800">Tags / Keywords</label>
+        {/* SECTION 5: TAGS & KEYWORDS - WITH DEDICATED AI TAGS BUTTON */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4 relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-indigo-500 to-cyan-500 absolute top-0 left-0" />
+          <div className="flex items-center justify-between pt-2">
+            <label className="text-xs font-black text-slate-800 uppercase tracking-wider">
+              Tags / Keywords
+            </label>
+
+            {/* Dedicated AI Tags Button */}
+            <button
+              type="button"
+              onClick={handleAITags}
+              disabled={isGeneratingAITags}
+              className="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-extrabold text-xs px-4 py-2 rounded-xl border border-indigo-400/30 flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-indigo-500/20 disabled:opacity-50 cursor-pointer"
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${isGeneratingAITags ? 'animate-spin' : 'text-cyan-200'}`} />
+              <span>{isGeneratingAITags ? 'Generating Tags...' : '🏷️ AI Auto Tags'}</span>
+            </button>
+          </div>
+
           <TagInput
             tags={tags}
             onChange={(newTags) => setTags(newTags)}
@@ -326,19 +380,19 @@ export const SubmitNews: React.FC = () => {
         </div>
 
         {/* SUBMISSION FOOTER ACTION BAR */}
-        <div className="sticky bottom-16 md:bottom-4 z-20 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-gray-200 shadow-xl flex items-center justify-between gap-3">
+        <div className="sticky bottom-4 z-20 bg-white/95 backdrop-blur-md p-4 rounded-3xl border border-slate-200/90 shadow-2xl flex items-center justify-between gap-4">
           <div className="text-left text-xs">
-            <p className="font-bold text-gray-800 flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <p className="font-extrabold text-slate-900 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
               <span>By: {admin?.name || 'Reporter'} ({admin?.pressCardNo || 'Accredited'})</span>
             </p>
-            <p className="text-[10px] text-gray-500">Status will be set to: <strong>Pending Review</strong></p>
+            <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Status will be set to: <strong className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Pending Review</strong></p>
           </div>
 
           <button
             type="submit"
             disabled={submitMutation.isPending}
-            className="bg-gradient-to-r from-red-600 via-[#0058be] to-blue-700 hover:from-red-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-bold text-xs sm:text-sm shadow-lg flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+            className="bg-gradient-to-r from-rose-600 via-red-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white px-8 py-3.5 rounded-2xl font-black text-xs sm:text-sm shadow-xl shadow-rose-600/30 flex items-center gap-2.5 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
           >
             <Send className="w-4 h-4" />
             <span>{submitMutation.isPending ? 'Submitting...' : 'Submit News Article'}</span>

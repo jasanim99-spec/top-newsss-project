@@ -1,0 +1,12 @@
+{
+  "name": "top-news-workspace",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "node start.js",
+    "dev:news": "npm --prefix top-news run dev",
+    "dev:admin": "npm --prefix top-news-admin run dev",
+    "dev:backend": "npm --prefix top-news-backend run dev"
+  }
+}

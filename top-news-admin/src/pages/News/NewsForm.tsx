@@ -24,7 +24,7 @@ const validationSchema = Yup.object({
   content: Yup.string().required('Content is required'),
   imageUrl: Yup.string().required('Cover image is required'),
   category: Yup.string().required('Category is required'),
-  topic: Yup.string().required('Topic is required'),
+  topic: Yup.string(),
   language: Yup.string().required('Language is required'),
   section: Yup.string().required('Section is required'),
   status: Yup.string().oneOf(['draft', 'pending', 'published', 'rejected']).required('Status is required'),
@@ -55,15 +55,39 @@ const NewsForm: React.FC = () => {
   });
 
   const mutation = useMutation({
-    mutationFn: async (data: Partial<NewsArticle>) => {
+    mutationFn: async (data: Partial<NewsArticle> & { sendPush?: boolean }) => {
+      const { sendPush, ...newsData } = data;
+      let result;
       if (isEditing && id) {
-        return newsService.updateNews(id, data);
+        result = await newsService.updateNews(id, newsData);
+      } else {
+        result = await newsService.createNews(newsData);
       }
-      return newsService.createNews(data);
+      
+      if (sendPush && newsData.title) {
+        try {
+          const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+          await fetch(`${API}/notifications/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: newsData.isBreaking ? `🔴 BREAKING: ${newsData.title}` : newsData.title,
+              body: newsData.description || newsData.title,
+              icon: newsData.imageUrl || '/logo.png',
+              url: newsData.slug ? `/article/${newsData.slug}` : '/',
+            }),
+          });
+        } catch (pushErr) {
+          console.error('Push notification failed:', pushErr);
+        }
+      }
+      return result;
     },
     onSuccess: () => {
+      queryClient.resetQueries({ queryKey: ['news'] });
       queryClient.invalidateQueries({ queryKey: ['news'] });
       queryClient.invalidateQueries({ queryKey: ['news-stats'] });
+      queryClient.refetchQueries({ queryKey: ['news'] });
       toast.success(isEditing ? 'News updated successfully' : 'News created successfully');
       navigate('/news');
     },
@@ -73,52 +97,120 @@ const NewsForm: React.FC = () => {
     },
   });
 
+  const formatDateTimeLocal = (dateStr?: string) => {
+    if (!dateStr) return new Date().toISOString().slice(0, 16);
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 16);
+      return d.toISOString().slice(0, 16);
+    } catch (e) {
+      return new Date().toISOString().slice(0, 16);
+    }
+  };
+
+  const initialValues: NewsArticle = React.useMemo(() => {
+    if (existingNews) {
+      return {
+        ...existingNews,
+        title: existingNews.title || '',
+        slug: existingNews.slug || '',
+        description: existingNews.description || '',
+        content: existingNews.content || '',
+        imageUrl: existingNews.imageUrl || '',
+        category: (existingNews.category || 'general').toLowerCase(),
+        topic: (existingNews.topic || 'general').toLowerCase(),
+        language: (existingNews.language || 'en').toLowerCase(),
+        section: existingNews.section || 'main',
+        keywords: Array.isArray(existingNews.keywords) ? existingNews.keywords : [],
+        tags: Array.isArray(existingNews.tags) ? existingNews.tags : [],
+        status: existingNews.status || 'published',
+        publishedAt: formatDateTimeLocal(existingNews.publishedAt),
+        sourceUrl: existingNews.sourceUrl || '',
+        isBreaking: !!existingNews.isBreaking,
+        aiSummary: (existingNews as any).aiSummary || '',
+        authorName: (existingNews as any).authorName || 'Admin Desk',
+        authorRole: (existingNews as any).authorRole || 'admin',
+        authorId: (existingNews as any).authorId || '',
+        authorEmail: (existingNews as any).authorEmail || '',
+        pressCardNo: (existingNews as any).pressCardNo || '',
+        authorCity: (existingNews as any).authorCity || '',
+        location: (existingNews as any).location || undefined,
+      };
+    }
+    return {
+      title: '',
+      slug: '',
+      description: '',
+      content: '',
+      imageUrl: '',
+      category: 'general',
+      topic: 'general',
+      language: 'en',
+      section: 'main',
+      keywords: [],
+      tags: [],
+      status: 'published',
+      publishedAt: new Date().toISOString().slice(0, 16),
+      sourceUrl: '',
+      isBreaking: false,
+      aiSummary: '',
+      authorName: 'Admin Desk',
+      authorRole: 'admin'
+    };
+  }, [existingNews]);
+
   if (isEditing && isLoadingNews) {
     return <LoadingSpinner />;
   }
 
-  const initialValues: NewsArticle = existingNews || {
-    title: '',
-    slug: '',
-    description: '',
-    content: '',
-    imageUrl: '',
-    category: '',
-    topic: 'general',
-    language: 'en',
-    section: 'main',
-    keywords: [],
-    tags: [],
-    status: 'published',
-    publishedAt: new Date().toISOString().slice(0, 16),
-    sourceUrl: '',
-    isBreaking: false,
-    aiSummary: '',
-    authorName: 'Admin Desk',
-    authorRole: 'admin'
-  };
-
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={() => navigate('/news')}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-3xl font-bold text-gray-900">
-          {isEditing ? 'Edit News' : 'Create News'}
-        </h1>
+      {/* Header Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 md:p-8 shadow-xl border border-indigo-800/40 flex items-center justify-between gap-4">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex items-center gap-4">
+          <button
+            onClick={() => navigate('/news')}
+            className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all backdrop-blur-sm border border-white/15 cursor-pointer active:scale-95"
+            title="Go back to articles list"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-3 py-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-extrabold tracking-wider uppercase rounded-full shadow-xs">
+                ARTICLE EDITOR
+              </span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+              {isEditing ? 'Edit News Article' : 'Create New Article'}
+            </h1>
+          </div>
+        </div>
       </div>
 
-      <div className="bg-white p-8 rounded-lg shadow-sm border">
+      <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-200/80 relative overflow-hidden">
+        <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 absolute top-0 left-0" />
         <Formik
           initialValues={initialValues}
           validationSchema={validationSchema}
           onSubmit={async (values, { setSubmitting }) => {
             try {
-              await mutation.mutateAsync(values);
+              // Normalize publishedAt to ISO string (datetime-local gives "2026-09-07T01:00")
+              const publishedAt = values.publishedAt
+                ? new Date(values.publishedAt).toISOString()
+                : new Date().toISOString();
+
+              const payload: Partial<NewsArticle> = {
+                ...values,
+                publishedAt,
+                updatedAt: new Date().toISOString(),
+                content: values.content || '',
+                // Ensure id is included for PUT
+                ...(isEditing && id ? { id, _id: id } : {}),
+              };
+
+              await mutation.mutateAsync(payload);
             } catch (err) {
               console.error('Submit error:', err);
             } finally {
@@ -200,37 +292,6 @@ const NewsForm: React.FC = () => {
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Suggest SEO Tags</span>
                   </button>
-
-                  {/* Translate to Gujarati */}
-                  <button
-                    type="button"
-                    disabled={isGeneratingAI}
-                    onClick={async () => {
-                      if (!values.title && !values.description) {
-                        toast.error('Please enter content to translate.');
-                        return;
-                      }
-                      setIsGeneratingAI(true);
-                      try {
-                        const [transTitle, transDesc] = await Promise.all([
-                          aiService.translateText(values.title, 'gu'),
-                          aiService.translateText(values.description, 'gu'),
-                        ]);
-                        setFieldValue('title', transTitle);
-                        setFieldValue('description', transDesc);
-                        setFieldValue('language', 'gu');
-                        toast.success('🌐 Auto-translated to Gujarati!');
-                      } catch (e) {
-                        toast.error('Translation error');
-                      } finally {
-                        setIsGeneratingAI(false);
-                      }
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
-                  >
-                    <Languages className="w-3.5 h-3.5" />
-                    <span>Auto-Translate to Gujarati</span>
-                  </button>
                 </div>
               </div>
 
@@ -241,10 +302,6 @@ const NewsForm: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700">
                       Title *
                     </label>
-                    <VoiceDictationButton
-                      language={values.language}
-                      onTranscript={(t) => setFieldValue('title', values.title ? `${values.title} ${t}` : t)}
-                    />
                   </div>
                   <Field
                     name="title"
@@ -382,7 +439,7 @@ const NewsForm: React.FC = () => {
                 <ErrorMessage name="imageUrl" component="div" className="text-red-600 text-sm mt-1" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Language *
@@ -419,24 +476,8 @@ const NewsForm: React.FC = () => {
                   </Field>
                   <ErrorMessage name="category" component="div" className="text-red-600 text-sm mt-1" />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Section *
-                  </label>
-                  <Field
-                    as="select"
-                    name="section"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="main">Main</option>
-                    <option value="featured">Featured</option>
-                    <option value="sidebar">Sidebar</option>
-                    <option value="widget">Widget</option>
-                  </Field>
-                  <ErrorMessage name="section" component="div" className="text-red-600 text-sm mt-1" />
-                </div>
               </div>
+
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -503,6 +544,37 @@ const NewsForm: React.FC = () => {
                       className="w-4 h-4 text-red-600 rounded"
                     />
                     <span>Highlight as 🔴 BREAKING NEWS (Top Red Banner)</span>
+                  </label>
+
+                    <label className="flex items-center gap-2 text-xs font-bold text-blue-700 cursor-pointer mt-2">
+                      <input
+                        type="checkbox"
+                        checked={values.sendPush || false}
+                        onChange={(e) => setFieldValue('sendPush', e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded accent-blue-600"
+                      />
+                      <span className="flex items-center gap-1">🔔 Send Push Notification Alert to Subscribers</span>
+                    </label>
+
+                    {/* Section Checkboxes — radio-like behaviour */}
+                  <label className="flex items-center gap-2 text-xs font-bold text-amber-700 cursor-pointer mt-2">
+                    <input
+                      type="checkbox"
+                      checked={values.section === 'featured'}
+                      onChange={(e) => setFieldValue('section', e.target.checked ? 'featured' : 'main')}
+                      className="w-4 h-4 rounded accent-amber-500"
+                    />
+                    <span>⭐ Featured Stories (Homepage Hero + Carousel)</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 text-xs font-bold text-teal-700 cursor-pointer mt-1">
+                    <input
+                      type="checkbox"
+                      checked={values.section === 'sidebar'}
+                      onChange={(e) => setFieldValue('section', e.target.checked ? 'sidebar' : 'main')}
+                      className="w-4 h-4 rounded accent-teal-500"
+                    />
+                    <span>📋 Sidebar / Trending Now (Right Panel)</span>
                   </label>
 
                   <div>

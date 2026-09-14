@@ -6,6 +6,8 @@ export interface SiteSettings {
   faviconUrl: string;
   siteName: string;
   siteTagline: string;
+  adminUrl: string;
+  mainWebsiteUrl: string;
   masterKey: string;
   updatedAt?: string;
 }
@@ -15,16 +17,32 @@ const DEFAULT_SETTINGS: SiteSettings = {
   faviconUrl: '/logo.png',
   siteName: 'TOP NEWS',
   siteTagline: 'Breaking News, Latest Updates & Current Affairs',
+  adminUrl: 'http://localhost:5173',
+  mainWebsiteUrl: 'http://localhost:8080',
   masterKey: 'TOPNEWS2026'
 };
 
 const LOCAL_STORAGE_KEY = 'topnews_site_settings';
+const API_BASE_URL = 'http://localhost:3000';
 
 export const settingsService = {
   /**
-   * Fetch site settings from Firestore settings/general or localStorage fallback
+   * Fetch site settings from PostgreSQL REST API (fallback to Firestore / localStorage)
    */
   async getSettings(): Promise<SiteSettings> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/settings`);
+      if (res.ok) {
+        const data = await res.json();
+        const merged = { ...DEFAULT_SETTINGS, ...data };
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
+        this.applyFavicon(merged.faviconUrl);
+        return merged;
+      }
+    } catch (err) {
+      console.warn('PostgreSQL settings fetch notice:', err);
+    }
+
     try {
       const docRef = doc(db, 'settings', 'general');
       const snap = await getDoc(docRef);
@@ -36,7 +54,7 @@ export const settingsService = {
         return merged;
       }
     } catch (err) {
-      console.warn('Firestore settings fetch notice, using cached/default settings:', err);
+      console.warn('Firestore settings fetch notice:', err);
     }
 
     const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -52,7 +70,7 @@ export const settingsService = {
   },
 
   /**
-   * Update site settings in Firestore and sync to localStorage, window event, and favicon
+   * Update site settings in PostgreSQL + Firestore dual update + Local sync
    */
   async updateSettings(newSettings: Partial<SiteSettings>): Promise<SiteSettings> {
     let current = DEFAULT_SETTINGS;
@@ -80,13 +98,13 @@ export const settingsService = {
     } catch (e) {}
 
     try {
-      await fetch('http://localhost:3000/settings', {
+      await fetch(`${API_BASE_URL}/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated)
       });
     } catch (bErr) {
-      console.warn('Backend settings update notice:', bErr);
+      console.warn('PostgreSQL settings update notice:', bErr);
     }
 
     try {

@@ -29,15 +29,28 @@ const Index = () => {
       } catch (e) {}
     }
 
-    const unsub = onSnapshot(doc(db, 'settings', 'general'), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
+    fetch('http://localhost:3000/settings')
+      .then(res => res.json())
+      .then(data => {
         if (data.siteName) setSiteName(data.siteName);
         if (data.siteTagline) setSiteTagline(data.siteTagline);
-      }
-    }, () => {});
+      })
+      .catch(() => {});
 
-    return () => unsub();
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('topnews_settings_channel');
+      bc.onmessage = (event) => {
+        if (event.data) {
+          if (event.data.siteName) setSiteName(event.data.siteName);
+          if (event.data.siteTagline) setSiteTagline(event.data.siteTagline);
+        }
+      };
+    } catch (e) {}
+
+    return () => {
+      if (bc) bc.close();
+    };
   }, []);
   
   return (
@@ -85,7 +98,7 @@ const Index = () => {
       <div className="min-h-screen bg-background">
         <Header />
         
-        <main>
+        <main className="pt-2 lg:pt-3">
           {/* Hero Section */}
           <HeroSection />
           

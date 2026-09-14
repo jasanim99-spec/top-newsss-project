@@ -21,6 +21,10 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+serviceAccountKey.json
+**/serviceAccountKey.json
+*.pem
+*.key
 
 # Editor & System Files
 .vscode/*
