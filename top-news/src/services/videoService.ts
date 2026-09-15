@@ -12,7 +12,7 @@ import {
 import { db } from '@/firebase/firestore';
 import { NewsVideo, VideoResponse } from '@/store/newsStore';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://top-newsss-project.vercel.app';
 const VIDEOS_COLLECTION = 'videos';
 
 const mapDocToNewsVideo = (docSnap: QueryDocumentSnapshot<DocumentData> | DocumentData, id: string): NewsVideo => {

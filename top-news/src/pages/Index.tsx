@@ -29,7 +29,8 @@ const Index = () => {
       } catch (e) {}
     }
 
-    fetch('http://localhost:3000/settings')
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://top-newsss-project.vercel.app';
+    fetch(`${API_BASE_URL}/settings`)
       .then(res => res.json())
       .then(data => {
         if (data.siteName) setSiteName(data.siteName);

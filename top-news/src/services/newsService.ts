@@ -14,7 +14,7 @@ import { NewsArticle, NewsResponse } from '@/store/newsStore';
 import { parseDateToMillis, isLanguageMatch, getCreatedNewsArticles, getDeletedNewsIds } from '@/utils/converters';
 import { mockArticles } from '@/data/mockNews';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://top-newsss-project.vercel.app';
 const NEWS_COLLECTION = 'news';
 
 const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('topnews_realtime_sync') : null;

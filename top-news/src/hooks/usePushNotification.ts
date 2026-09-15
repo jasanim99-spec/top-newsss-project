@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API = import.meta.env.VITE_API_BASE_URL || 'https://top-newsss-project.vercel.app';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);

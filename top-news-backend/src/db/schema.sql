@@ -97,7 +97,57 @@ CREATE INDEX IF NOT EXISTS idx_videos_category ON short_videos(category);
 CREATE INDEX IF NOT EXISTS idx_videos_language ON short_videos(language);
 CREATE INDEX IF NOT EXISTS idx_videos_published_at ON short_videos(published_at DESC);
 
--- 4. Site Settings Table
+-- 4. Advertisements Table
+CREATE TABLE IF NOT EXISTS advertisements (
+    id VARCHAR(128) PRIMARY KEY,
+    title VARCHAR(500) NOT NULL,
+    image_url TEXT,
+    link_url TEXT,
+    position VARCHAR(100) DEFAULT 'sidebar',
+    is_active BOOLEAN DEFAULT TRUE,
+    start_date TIMESTAMPTZ,
+    end_date TIMESTAMPTZ,
+    click_count INT DEFAULT 0,
+    client_name VARCHAR(255),
+    client_email VARCHAR(255),
+    client_phone VARCHAR(50),
+    status VARCHAR(50) DEFAULT 'active',
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 5. Reporter Leaves Table
+CREATE TABLE IF NOT EXISTS reporter_leaves (
+    id VARCHAR(128) PRIMARY KEY,
+    reporter_id VARCHAR(128) REFERENCES users(id) ON DELETE CASCADE,
+    reporter_name VARCHAR(255),
+    reporter_email VARCHAR(255),
+    leave_type VARCHAR(100),
+    start_date TIMESTAMPTZ,
+    end_date TIMESTAMPTZ,
+    total_days INT DEFAULT 1,
+    reason TEXT,
+    backup_reporter VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'pending',
+    admin_notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. Reporter Goals Table
+CREATE TABLE IF NOT EXISTS reporter_goals (
+    id VARCHAR(128) PRIMARY KEY,
+    reporter_id VARCHAR(128) REFERENCES users(id) ON DELETE CASCADE,
+    target_articles INT DEFAULT 0,
+    target_views INT DEFAULT 0,
+    month INT,
+    year INT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 7. Site Settings Table
 CREATE TABLE IF NOT EXISTS site_settings (
     id VARCHAR(50) PRIMARY KEY DEFAULT 'general',
     logo_url TEXT DEFAULT '/logo.png',

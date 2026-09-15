@@ -49,7 +49,7 @@ export function AdSubmissionModal({ isOpen, onClose }: AdSubmissionModalProps) {
 
   if (!isOpen) return null;
 
-  const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const API = import.meta.env.VITE_API_BASE_URL || 'https://top-newsss-project.vercel.app';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

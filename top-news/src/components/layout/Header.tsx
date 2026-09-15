@@ -527,7 +527,8 @@ export function Header() {
     }
 
     // 2. Fetch from backend API
-    fetch('http://localhost:3000/settings')
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://top-newsss-project.vercel.app';
+    fetch(`${API_BASE_URL}/settings`)
       .then(res => res.ok ? res.json() : null)
       .then(data => { if (data) applyData(data); })
       .catch(() => {});
@@ -563,7 +564,8 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/news?status=published&language=${currentLanguage}&limit=30`)
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://top-newsss-project.vercel.app';
+    fetch(`${API_BASE_URL}/news?status=published&language=${currentLanguage}&limit=30`)
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data && Array.isArray(data.news)) {

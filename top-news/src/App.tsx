@@ -73,7 +73,8 @@ function SiteSettingsManager() {
     }
 
     // 2. Fetch from backend API endpoint
-    fetch('http://localhost:3000/settings')
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://top-newsss-project.vercel.app';
+    fetch(`${API_BASE_URL}/settings`)
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data) applySettingsData(data);

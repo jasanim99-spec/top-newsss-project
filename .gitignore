@@ -23,8 +23,10 @@ yarn-error.log*
 .env.*.local
 serviceAccountKey.json
 **/serviceAccountKey.json
-*.pem
-*.key
+local_db_backup.json
+*.dump
+*.bak
+*.sql.bak
 
 # Editor & System Files
 .vscode/*
