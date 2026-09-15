@@ -16,6 +16,7 @@ import Advertise from "./pages/Advertise"
 import PrivacyPolicy from "./pages/PrivacyPolicy"
 import TermsOfUse from "./pages/TermsOfUse"
 import Sitemap from "./pages/Sitemap"
+import { MobileBottomDock } from "@/components/layout/MobileBottomDock";
 
 import { useEffect } from 'react';
 import { initSocketClient } from '@/services/socketService';
@@ -180,6 +181,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <MobileBottomDock />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
