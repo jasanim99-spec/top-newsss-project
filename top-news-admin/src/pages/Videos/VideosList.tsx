@@ -62,23 +62,24 @@ const VideosList: React.FC = () => {
   });
 
   useEffect(() => {
-    if (data?.videos) {
-      let filtered = data.videos;
+    const videoList = data?.videos || data?.articles;
+    if (videoList) {
+      let filtered = videoList;
       
       if (searchTerm) {
         filtered = filtered.filter(
           video =>
-            video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            video.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            video.keywords.some(keyword => 
+            (video.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (video.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (Array.isArray(video.keywords) && video.keywords.some(keyword => 
               keyword.toLowerCase().includes(searchTerm.toLowerCase())
-            )
+            ))
         );
       }
       
       setFilteredVideos(filtered);
     }
-  }, [data?.videos, searchTerm]);
+  }, [data?.videos, data?.articles, searchTerm]);
 
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this video and its storage assets?')) {
@@ -132,7 +133,7 @@ const VideosList: React.FC = () => {
       />
 
       {filteredVideos.length === 0 ? (
-        <div className="bg-white p-12 text-center rounded-2xl border border-slate-200/80 text-slate-500 font-medium shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-12 text-center rounded-2xl border border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-medium shadow-sm transition-colors">
           No short videos found.
         </div>
       ) : (
@@ -147,7 +148,7 @@ const VideosList: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-white rounded-2xl shadow-sm border border-slate-200/80 hover:shadow-md hover:border-slate-300 transition-all overflow-hidden flex flex-col justify-between"
+                className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all overflow-hidden flex flex-col justify-between"
               >
                 <div>
                   <div className="relative">

@@ -49,11 +49,13 @@ export const videoService = {
       const res = await fetch(`${API_BASE_URL}/short-videos?${queryParams.toString()}`);
       if (res.ok) {
         const data = await res.json();
+        const videoList = data.videos || data.articles || [];
         return {
-          total: data.total || 0,
+          total: data.total || videoList.length,
           page: data.page || pageNum,
           limit: data.limit || limitNum,
-          articles: data.videos || []
+          videos: videoList,
+          articles: videoList
         };
       }
     } catch (err) {
@@ -76,9 +78,9 @@ export const videoService = {
       const total = videos.length;
       const paginated = videos.slice((pageNum - 1) * limitNum, pageNum * limitNum);
 
-      return { total, page: pageNum, limit: limitNum, articles: paginated };
+      return { total, page: pageNum, limit: limitNum, videos: paginated, articles: paginated };
     } catch (e) {
-      return { total: 0, page: pageNum, limit: limitNum, articles: [] };
+      return { total: 0, page: pageNum, limit: limitNum, videos: [], articles: [] };
     }
   },
 
