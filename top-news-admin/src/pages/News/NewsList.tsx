@@ -218,54 +218,54 @@ const NewsList: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="flex flex-row lg:flex-col gap-2 mt-4 lg:mt-0">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:flex lg:flex-col gap-2 w-full lg:w-44 mt-4 lg:mt-0">
                     <button
                       onClick={() => toggleHeroMutation.mutate({ id: articleId, isHero })}
                       disabled={toggleHeroMutation.isPending}
-                      className={`flex items-center justify-center px-3.5 py-2 rounded-xl transition-all text-xs font-bold cursor-pointer ${
+                      className={`flex items-center justify-center px-2.5 sm:px-3.5 py-2 rounded-xl transition-all text-xs font-bold cursor-pointer ${
                         isHero
                           ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-md'
                           : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-300/80'
                       }`}
                       title={isHero ? 'Remove from Hero Section' : 'Set as Hero Section Article'}
                     >
-                      <Star className={`w-4 h-4 mr-1.5 ${isHero ? 'fill-white' : 'text-amber-600'}`} />
-                      <span>{isHero ? 'Hero Active' : 'Set as Hero'}</span>
+                      <Star className={`w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 flex-shrink-0 ${isHero ? 'fill-white' : 'text-amber-600'}`} />
+                      <span className="truncate">{isHero ? 'Hero Active' : 'Set as Hero'}</span>
                     </button>
 
                     <button
                       onClick={() => togglePublishMutation.mutate({ id: articleId, currentStatus: article.status })}
-                      className={`flex items-center justify-center px-3.5 py-2 rounded-xl transition-all text-xs font-semibold cursor-pointer ${
+                      className={`flex items-center justify-center px-2.5 sm:px-3.5 py-2 rounded-xl transition-all text-xs font-semibold cursor-pointer ${
                         isPublished ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
                       }`}
                       disabled={togglePublishMutation.isPending}
                     >
-                      {isPublished ? <XCircle className="w-4 h-4 mr-1.5" /> : <CheckCircle2 className="w-4 h-4 mr-1.5" />}
-                      <span>{isPublished ? 'Unpublish' : 'Publish'}</span>
+                      {isPublished ? <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 flex-shrink-0" /> : <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 flex-shrink-0" />}
+                      <span className="truncate">{isPublished ? 'Unpublish' : 'Publish'}</span>
                     </button>
 
                     <Link
                       to={`/news/${articleId}/view`}
-                      className="flex items-center justify-center px-3.5 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all text-xs font-semibold"
+                      className="flex items-center justify-center px-2.5 sm:px-3.5 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all text-xs font-semibold"
                     >
-                      <Eye className="w-4 h-4 mr-1.5" />
+                      <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 flex-shrink-0" />
                       <span>View</span>
                     </Link>
                     
                     <Link
                       to={`/news/${articleId}/edit`}
-                      className="flex items-center justify-center px-3.5 py-2 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-xl hover:bg-blue-100 transition-all text-xs font-semibold"
+                      className="flex items-center justify-center px-2.5 sm:px-3.5 py-2 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-xl hover:bg-blue-100 transition-all text-xs font-semibold"
                     >
-                      <Edit className="w-4 h-4 mr-1.5" />
+                      <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 flex-shrink-0" />
                       <span>Edit</span>
                     </Link>
                     
                     <button
                       onClick={() => handleDelete(articleId)}
-                      className="flex items-center justify-center px-3.5 py-2 bg-rose-50 text-rose-700 border border-rose-200/60 rounded-xl hover:bg-rose-100 transition-all text-xs font-semibold cursor-pointer"
+                      className="flex items-center justify-center px-2.5 sm:px-3.5 py-2 bg-rose-50 text-rose-700 border border-rose-200/60 rounded-xl hover:bg-rose-100 transition-all text-xs font-semibold cursor-pointer col-span-2 sm:col-span-1"
                       disabled={deleteMutation.isPending}
                     >
-                      <Trash2 className="w-4 h-4 mr-1.5" />
+                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 flex-shrink-0" />
                       <span>Delete</span>
                     </button>
                   </div>
