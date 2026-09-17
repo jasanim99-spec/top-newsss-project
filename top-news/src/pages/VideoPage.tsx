@@ -184,27 +184,34 @@ export default function VideoPage() {
                     autoPlay
                   />
                 </div> */}
-                <div className="aspect-video bg-black rounded-lg overflow-hidden mb-6">
+                <div className="aspect-video bg-black rounded-2xl overflow-hidden mb-6 shadow-2xl border border-slate-800 relative">
                   {currentVideo.videoUrl.includes('youtube.com') || currentVideo.videoUrl.includes('youtu.be') ? (
                     <iframe
                       src={
-                        currentVideo.videoUrl.includes('watch?v=')
-                          ? currentVideo.videoUrl.replace('watch?v=', 'embed/')
-                          : currentVideo.videoUrl.replace('youtu.be/', 'youtube.com/embed/')
+                        currentVideo.videoUrl.includes('shorts/')
+                          ? `https://www.youtube.com/embed/${currentVideo.videoUrl.split('shorts/')[1]?.split('?')[0]}?autoplay=1`
+                          : currentVideo.videoUrl.includes('watch?v=')
+                          ? `https://www.youtube.com/embed/${currentVideo.videoUrl.split('watch?v=')[1]?.split('&')[0]}?autoplay=1`
+                          : `https://www.youtube.com/embed/${currentVideo.videoUrl.split('youtu.be/')[1]?.split('?')[0]}?autoplay=1`
                       }
                       title={currentVideo.title}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
-                      className="w-full h-full"
+                      className="w-full h-full border-0"
                     />
                   ) : (
                     <video
-                      src={currentVideo.videoUrl}
-                      poster={currentVideo.thumbnailUrl}
+                      key={currentVideo.videoUrl}
                       controls
-                      className="w-full h-full"
-                      autoPlay
-                    />
+                      playsInline
+                      preload="auto"
+                      poster={currentVideo.thumbnailUrl}
+                      className="w-full h-full object-contain"
+                    >
+                      <source src={currentVideo.videoUrl} type="video/mp4" />
+                      <source src={currentVideo.videoUrl} type="video/webm" />
+                      Your browser does not support the video tag.
+                    </video>
                   )}
                 </div>
                 {/* Video Info */}
