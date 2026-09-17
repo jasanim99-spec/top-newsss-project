@@ -26,8 +26,8 @@ export const Settings: React.FC = () => {
     faviconUrl: '/logo.png',
     siteName: 'TOP NEWS',
     siteTagline: 'Breaking News, Latest Updates & Current Affairs',
-    adminUrl: 'http://localhost:5173',
-    mainWebsiteUrl: 'http://localhost:8080',
+    adminUrl: 'https://top-newsss-project-rqnz.vercel.app',
+    mainWebsiteUrl: 'https://top-newsss-project-ehji.vercel.app',
     masterKey: 'TOPNEWS2026'
   });
 

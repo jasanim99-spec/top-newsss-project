@@ -11,8 +11,8 @@ function mapRowToSettings(row) {
       faviconUrl: '/logo.png',
       siteName: 'TOP NEWS',
       siteTagline: 'Breaking News, Latest Updates & Current Affairs',
-      adminUrl: 'http://localhost:5173',
-      mainWebsiteUrl: 'http://localhost:8080',
+      adminUrl: 'https://top-newsss-project-rqnz.vercel.app',
+      mainWebsiteUrl: 'https://top-newsss-project-ehji.vercel.app',
       masterKey: process.env.MASTER_KEY || 'TOPNEWS2026'
     };
   }
@@ -21,8 +21,8 @@ function mapRowToSettings(row) {
     faviconUrl: row.favicon_url || '/logo.png',
     siteName: row.site_name || 'TOP NEWS',
     siteTagline: row.site_tagline || 'Breaking News, Latest Updates & Current Affairs',
-    adminUrl: row.admin_url || 'http://localhost:5173',
-    mainWebsiteUrl: row.main_website_url || 'http://localhost:8080',
+    adminUrl: row.admin_url || 'https://top-newsss-project-rqnz.vercel.app',
+    mainWebsiteUrl: row.main_website_url || 'https://top-newsss-project-ehji.vercel.app',
     masterKey: process.env.MASTER_KEY || row.master_key || 'TOPNEWS2026',
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString()
   };
