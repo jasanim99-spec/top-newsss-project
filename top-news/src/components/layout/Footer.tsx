@@ -271,7 +271,7 @@ export function Footer() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           {/* Main footer content */}
           <div className="py-16">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
               
               {/* Brand Section */}
               <div className="space-y-6 lg:col-span-1">
@@ -366,42 +366,6 @@ export function Footer() {
                     </a>
                   ))}
                 </nav>
-              </div>
-
-              {/* Newsletter */}
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-white relative">
-                  Stay Updated
-                  <div className="absolute -bottom-2 left-0 w-8 h-0.5 bg-red-500"></div>
-                </h3>
-                <p className="text-gray-300 text-sm leading-relaxed">
-                  Get breaking news delivered to your inbox. Join over 100,000+ subscribers.
-                </p>
-                
-                <div className="space-y-4">
-                  <div className="relative group">
-                    <input
-                      type="email"
-                      placeholder="Enter your email address"
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent backdrop-blur-sm transition-all duration-300 group-hover:bg-white/15"
-                    />
-                    <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-red-500/20 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 rounded-lg transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/50"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    Subscribe Now
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
-                  </Button>
-                </div>
-
-                <div className="flex items-center space-x-2 text-xs text-gray-400">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span>10,234+ active subscribers</span>
-                </div>
               </div>
             </div>
           </div>
