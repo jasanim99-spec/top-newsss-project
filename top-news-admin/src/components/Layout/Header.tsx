@@ -49,28 +49,28 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   return (
     <header className="sticky top-0 z-20 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 flex justify-between items-center px-4 md:px-8 h-16 shadow-2xs transition-colors">
       {/* Left: Mobile Toggle & Search Bar */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-xs sm:max-w-md">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+          className="lg:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors flex-shrink-0"
           title="Open Menu"
         >
           <Menu className="w-5 h-5" />
         </button>
 
         {/* Search Input Pill */}
-        <div className="flex items-center bg-slate-50/90 dark:bg-slate-800/90 px-4 py-2 rounded-2xl w-64 sm:w-96 border border-slate-200/80 dark:border-slate-700 focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:ring-4 focus-within:ring-indigo-100 dark:focus-within:ring-indigo-900/40 focus-within:border-indigo-500 transition-all shadow-2xs">
-          <Search className="w-4 h-4 text-indigo-500 mr-2.5 flex-shrink-0" />
+        <div className="flex items-center bg-slate-50/90 dark:bg-slate-800/90 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl w-full border border-slate-200/80 dark:border-slate-700 focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:ring-4 focus-within:ring-indigo-100 dark:focus-within:ring-indigo-900/40 focus-within:border-indigo-500 transition-all shadow-2xs">
+          <Search className="w-4 h-4 text-indigo-500 mr-2 flex-shrink-0" />
           <input
             type="text"
-            placeholder="Search news, videos or analytics..."
+            placeholder="Search news, videos..."
             className="bg-transparent border-none focus:outline-none text-xs font-semibold w-full placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-slate-100"
           />
         </div>
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
         <a
           href={mainWebsiteUrl}
           target="_blank"
@@ -89,7 +89,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         {/* Notification Icon with Pulsing Dot */}
         <button 
           onClick={() => navigate('/notifications')}
-          className="relative hover:bg-indigo-50/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl p-2.5 transition-all hidden sm:flex items-center justify-center cursor-pointer"
+          className="relative hover:bg-indigo-50/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl p-2 sm:p-2.5 transition-all hidden sm:flex items-center justify-center cursor-pointer"
           title="Notifications"
         >
           <Bell className="w-4 h-4" />
@@ -99,7 +99,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         {/* Settings Icon */}
         <button 
           onClick={() => navigate('/settings')}
-          className="hover:bg-indigo-50/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl p-2.5 transition-all hidden sm:flex items-center justify-center cursor-pointer"
+          className="hover:bg-indigo-50/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl p-2 sm:p-2.5 transition-all hidden sm:flex items-center justify-center cursor-pointer"
           title="Site Settings"
         >
           <Settings className="w-4 h-4" />
@@ -111,22 +111,23 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
-            className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white px-4 py-2.5 rounded-xl font-extrabold text-xs flex items-center gap-2 shadow-md shadow-indigo-500/25 active:scale-95 transition-all cursor-pointer"
+            className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-xl font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-500/25 active:scale-95 transition-all cursor-pointer"
+            title="Create New"
           >
-            <Plus className="w-4 h-4" />
-            <span>+ Create New</span>
+            <Plus className="w-4 h-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Create New</span>
           </button>
 
           {createDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
               <button
                 onClick={() => {
                   setCreateDropdownOpen(false);
                   navigate('/news/create');
                 }}
-                className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-900 flex items-center gap-3 font-bold transition-colors"
+                className="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-900 dark:hover:text-white flex items-center gap-3 font-bold transition-colors"
               >
-                <FileText className="w-4 h-4 text-indigo-600" />
+                <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                 Create News Article
               </button>
               <button
@@ -134,9 +135,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                   setCreateDropdownOpen(false);
                   navigate('/videos/create');
                 }}
-                className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-purple-50 hover:text-purple-900 flex items-center gap-3 font-bold transition-colors"
+                className="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-purple-50 dark:hover:bg-slate-800 hover:text-purple-900 dark:hover:text-white flex items-center gap-3 font-bold transition-colors"
               >
-                <Video className="w-4 h-4 text-purple-600" />
+                <Video className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                 Create Short Video
               </button>
             </div>
@@ -146,10 +147,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all ml-1 cursor-pointer"
+          className="p-2 sm:p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer"
           title="Sign Out"
         >
-          <LogOut className="w-4.5 h-4.5" />
+          <LogOut className="w-4 h-4" />
         </button>
       </div>
     </header>
