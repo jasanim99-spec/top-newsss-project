@@ -346,9 +346,9 @@ export const LeaveManagement: React.FC = () => {
       {/* LEAVE APPLICATIONS TABLE CONTAINER */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
         {/* Table Header Controls Bar */}
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
               <FileText className="w-4 h-4 text-indigo-400" />
             </div>
             <h3 className="font-extrabold text-base tracking-tight text-white">
@@ -357,12 +357,12 @@ export const LeaveManagement: React.FC = () => {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex items-center gap-1 bg-white/10 backdrop-blur-md p-1 rounded-2xl border border-white/15">
+          <div className="flex items-center gap-1 bg-white/10 backdrop-blur-md p-1 rounded-2xl border border-white/15 w-full sm:w-auto overflow-x-auto no-scrollbar">
             {['all', 'pending', 'approved', 'rejected'].map(st => (
               <button
                 key={st}
                 onClick={() => setFilterStatus(st)}
-                className={`px-3.5 py-1.5 text-xs font-extrabold rounded-xl uppercase transition-all cursor-pointer ${
+                className={`flex-1 sm:flex-none px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-extrabold rounded-xl uppercase transition-all cursor-pointer whitespace-nowrap text-center ${
                   filterStatus === st 
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' 
                     : 'text-slate-300 hover:text-white hover:bg-white/10'
@@ -387,7 +387,7 @@ export const LeaveManagement: React.FC = () => {
               No leave applications found for status "{filterStatus}".
             </div>
           ) : (
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-xs border-collapse min-w-[650px] lg:min-w-none">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                   <th className="py-3.5 px-5">Reporter</th>
