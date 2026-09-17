@@ -26,18 +26,26 @@ initSocket(server);
 app.use(cors());
 app.use(express.json());
 
-// API Routers
+// API Routers (Supporting both root & /api prefixes)
 app.use('/news', newsRouter);
+app.use('/api/news', newsRouter);
 app.use('/short-videos', videosRouter);
+app.use('/api/short-videos', videosRouter);
 app.use('/settings', settingsRouter);
+app.use('/api/settings', settingsRouter);
 app.use('/users', usersRouter);
+app.use('/api/users', usersRouter);
 app.use('/ads', adsRouter);
+app.use('/api/ads', adsRouter);
 app.use('/notifications', notificationsRouter);
+app.use('/api/notifications', notificationsRouter);
 app.use('/leaves', leavesRouter);
+app.use('/api/leaves', leavesRouter);
 app.use('/goals', goalsRouter);
+app.use('/api/goals', goalsRouter);
 
 // Health Check Route
-app.get('/health', async (req, res) => {
+app.get(['/health', '/api/health'], async (req, res) => {
   const dbConnected = await checkConnection();
   res.json({
     status: 'ok',
