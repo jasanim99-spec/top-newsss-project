@@ -47,24 +47,24 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   }, []);
 
   return (
-    <header className="sticky top-0 z-20 w-full bg-white/90 backdrop-blur-xl border-b border-slate-200/80 flex justify-between items-center px-4 md:px-8 h-16 shadow-2xs">
+    <header className="sticky top-0 z-20 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 flex justify-between items-center px-4 md:px-8 h-16 shadow-2xs transition-colors">
       {/* Left: Mobile Toggle & Search Bar */}
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-xl hover:bg-slate-100 text-slate-600 transition-colors"
+          className="lg:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
           title="Open Menu"
         >
           <Menu className="w-5 h-5" />
         </button>
 
         {/* Search Input Pill */}
-        <div className="flex items-center bg-slate-50/90 px-4 py-2 rounded-2xl w-64 sm:w-96 border border-slate-200/80 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-100 focus-within:border-indigo-500 transition-all shadow-2xs">
+        <div className="flex items-center bg-slate-50/90 dark:bg-slate-800/90 px-4 py-2 rounded-2xl w-64 sm:w-96 border border-slate-200/80 dark:border-slate-700 focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:ring-4 focus-within:ring-indigo-100 dark:focus-within:ring-indigo-900/40 focus-within:border-indigo-500 transition-all shadow-2xs">
           <Search className="w-4 h-4 text-indigo-500 mr-2.5 flex-shrink-0" />
           <input
             type="text"
             placeholder="Search news, videos or analytics..."
-            className="bg-transparent border-none focus:outline-none text-xs font-semibold w-full placeholder:text-slate-400 text-slate-800"
+            className="bg-transparent border-none focus:outline-none text-xs font-semibold w-full placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-slate-100"
           />
         </div>
       </div>
@@ -75,12 +75,12 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           href={mainWebsiteUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 text-slate-700 hover:text-indigo-900 text-xs font-bold transition-all border border-slate-200/80 shadow-2xs group"
+          className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100/80 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 hover:text-indigo-900 dark:hover:text-white text-xs font-bold transition-all border border-slate-200/80 dark:border-slate-700 shadow-2xs group"
           title="Open Main News Website"
         >
-          <Globe className="w-4 h-4 text-indigo-600 group-hover:rotate-12 transition-transform" />
+          <Globe className="w-4 h-4 text-indigo-600 dark:text-indigo-400 group-hover:rotate-12 transition-transform" />
           <span>View Website</span>
-          <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-indigo-600" />
+          <ExternalLink className="w-3 h-3 text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" />
         </a>
 
         {/* Theme Toggle Button */}
@@ -89,23 +89,23 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         {/* Notification Icon with Pulsing Dot */}
         <button 
           onClick={() => navigate('/notifications')}
-          className="relative hover:bg-indigo-50/80 text-slate-600 hover:text-indigo-600 rounded-xl p-2.5 transition-all hidden sm:flex items-center justify-center cursor-pointer"
+          className="relative hover:bg-indigo-50/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl p-2.5 transition-all hidden sm:flex items-center justify-center cursor-pointer"
           title="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900 animate-pulse" />
         </button>
 
         {/* Settings Icon */}
         <button 
           onClick={() => navigate('/settings')}
-          className="hover:bg-indigo-50/80 text-slate-600 hover:text-indigo-600 rounded-xl p-2.5 transition-all hidden sm:flex items-center justify-center cursor-pointer"
+          className="hover:bg-indigo-50/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl p-2.5 transition-all hidden sm:flex items-center justify-center cursor-pointer"
           title="Site Settings"
         >
           <Settings className="w-4 h-4" />
         </button>
         
-        <div className="h-6 w-[1px] bg-slate-200 mx-1 hidden sm:block"></div>
+        <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block"></div>
 
         {/* Create New Dropdown */}
         <div className="relative" ref={dropdownRef}>

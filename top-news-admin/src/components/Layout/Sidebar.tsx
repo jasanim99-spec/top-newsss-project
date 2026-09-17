@@ -128,29 +128,29 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         initial={{ x: '-100%' }}
         animate={{ x: isOpen ? 0 : '-100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed left-0 top-0 h-full w-[290px] bg-white border-r border-slate-200/80 z-50 lg:hidden flex flex-col justify-between p-5 shadow-2xl overflow-y-auto"
+        className="fixed left-0 top-0 h-full w-[290px] bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 z-50 lg:hidden flex flex-col justify-between p-5 shadow-2xl overflow-y-auto transition-colors"
       >
         <div>
           {/* Logo Header */}
-          <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+          <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3">
               <img 
                 src={logoUrl} 
                 alt="TOP NEWS Logo" 
-                className="w-10 h-10 rounded-xl object-cover shadow-sm border border-slate-100 flex-shrink-0"
+                className="w-10 h-10 rounded-xl object-cover shadow-sm border border-slate-100 dark:border-slate-800 flex-shrink-0"
                 onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png'; }}
               />
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h1 className="text-lg font-black text-slate-900 tracking-tight uppercase leading-none">TOP NEWS</h1>
+                  <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">TOP NEWS</h1>
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
-                <p className="text-[10px] font-extrabold text-indigo-600 tracking-wider uppercase mt-0.5">Admin Console</p>
+                <p className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase mt-0.5">Admin Console</p>
               </div>
             </div>
             <button
               onClick={onToggle}
-              className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -171,12 +171,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
           </div>
 
           {/* Navigation Links */}
-          <nav className="space-y-4">
+          <nav className="space-y-6">
             {menuSections.map((section) => (
               <div key={section.title} className="space-y-1">
-                <div className="px-3 pt-1 pb-1 text-[10px] font-black text-slate-400 tracking-wider uppercase">
+                <p className="px-3 text-[10px] font-extrabold tracking-widest text-slate-400 dark:text-slate-500 uppercase mb-2">
                   {section.title}
-                </div>
+                </p>
                 {section.items.map((item) => {
                   const isActive = location.pathname === item.path;
                   const Icon = item.icon;
@@ -188,8 +188,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                       onClick={onToggle}
                       className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                         isActive 
-                          ? `bg-gradient-to-r ${item.activeGradient} text-white shadow-md shadow-indigo-500/20 font-black` 
-                          : 'text-slate-700 hover:bg-slate-100/90 hover:text-slate-900'
+                          ? `bg-gradient-to-r ${item.activeGradient} text-white shadow-md shadow-indigo-500/20 font-black scale-[1.02]` 
+                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100/90 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -210,24 +210,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
           </nav>
         </div>
 
-        <div className="pt-4 border-t border-slate-200/80">
+        <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800">
           <a
             href={mainWebsiteUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold text-slate-700 hover:bg-indigo-50/80 hover:text-indigo-900 transition-all border border-slate-200/80 bg-slate-50/50"
+            className="flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-indigo-50/80 dark:hover:bg-slate-800 hover:text-indigo-900 dark:hover:text-white transition-all border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40"
           >
             <div className="flex items-center gap-2.5">
-              <Globe className="w-4 h-4 text-indigo-600" />
+              <Globe className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span>View Main Website</span>
             </div>
-            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+            <ExternalLink className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
           </a>
         </div>
       </motion.aside>
 
       {/* Desktop Permanent Sidebar */}
-      <aside className="hidden lg:flex fixed left-0 top-0 h-full w-[290px] bg-white border-r border-slate-200/80 flex-col justify-between p-5 z-30 shadow-[2px_0_12px_rgba(0,0,0,0.03)] overflow-y-auto">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-full w-[290px] bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 flex-col justify-between p-5 z-30 shadow-[2px_0_12px_rgba(0,0,0,0.03)] overflow-y-auto transition-colors">
         <div>
           {/* Logo Header */}
           <div className="mb-6 px-1 flex items-center justify-between">
@@ -235,15 +235,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
               <img 
                 src={logoUrl} 
                 alt="TOP NEWS Logo" 
-                className="w-10 h-10 rounded-xl object-cover shadow-sm border border-slate-100 flex-shrink-0"
+                className="w-10 h-10 rounded-xl object-cover shadow-sm border border-slate-100 dark:border-slate-800 flex-shrink-0"
                 onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png'; }}
               />
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h1 className="text-lg font-black text-slate-900 tracking-tight uppercase leading-none">TOP NEWS</h1>
+                  <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">TOP NEWS</h1>
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
-                <p className="text-[10px] font-extrabold text-indigo-600 tracking-wider uppercase mt-0.5">Admin Console</p>
+                <p className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase mt-0.5">Admin Console</p>
               </div>
             </div>
           </div>
@@ -263,12 +263,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
           </div>
 
           {/* Navigation Items */}
-          <nav className="space-y-4">
+          <nav className="space-y-6">
             {menuSections.map((section) => (
               <div key={section.title} className="space-y-1">
-                <div className="px-3 pt-1 pb-1 text-[10px] font-black text-slate-400 tracking-wider uppercase">
+                <p className="px-3 text-[10px] font-extrabold tracking-widest text-slate-400 dark:text-slate-500 uppercase mb-2">
                   {section.title}
-                </div>
+                </p>
                 {section.items.map((item) => {
                   const isActive = location.pathname === item.path;
                   const Icon = item.icon;
@@ -280,7 +280,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                       className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                         isActive 
                           ? `bg-gradient-to-r ${item.activeGradient} text-white shadow-md shadow-indigo-500/20 font-black scale-[1.02]` 
-                          : 'text-slate-700 hover:bg-slate-100/90 hover:text-slate-900'
+                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100/90 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -301,18 +301,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
           </nav>
         </div>
 
-        <div className="pt-4 border-t border-slate-200/80">
+        <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800">
           <a
             href={mainWebsiteUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold text-slate-700 hover:bg-indigo-50/80 hover:text-indigo-900 transition-all border border-slate-200/80 bg-slate-50/50 group"
+            className="flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-indigo-50/80 dark:hover:bg-slate-800 hover:text-indigo-900 dark:hover:text-white transition-all border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 group"
           >
             <div className="flex items-center gap-2.5">
-              <Globe className="w-4 h-4 text-indigo-600 group-hover:rotate-12 transition-transform" />
+              <Globe className="w-4 h-4 text-indigo-600 dark:text-indigo-400 group-hover:rotate-12 transition-transform" />
               <span>View Main Website</span>
             </div>
-            <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600" />
+            <ExternalLink className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" />
           </a>
         </div>
       </aside>

@@ -221,24 +221,24 @@ export const Settings: React.FC = () => {
 
       <form onSubmit={handleSave} className="space-y-8">
         {/* Section 1: Website Branding Assets */}
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm space-y-6">
-          <div className="flex items-center gap-2.5 pb-4 border-b border-gray-100">
-            <ImageIcon className="w-5 h-5 text-[#0058be]" />
-            <h2 className="text-lg font-bold text-gray-900">Website Logo & Favicon Setup</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200/80 dark:border-slate-800 p-6 shadow-sm space-y-6 transition-colors">
+          <div className="flex items-center gap-2.5 pb-4 border-b border-gray-100 dark:border-slate-800">
+            <ImageIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Website Logo & Favicon Setup</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Logo Card */}
-            <div className="bg-gray-50/80 p-5 rounded-2xl border border-gray-200/60 flex flex-col justify-between space-y-4">
+            <div className="bg-gray-50/80 dark:bg-slate-800/60 p-5 rounded-2xl border border-gray-200/60 dark:border-slate-700/60 flex flex-col justify-between space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">Website Main Logo</label>
-                  <span className="text-[10px] font-bold text-[#0058be] bg-[#0058be]/10 px-2 py-0.5 rounded-full">Header Logo</span>
+                  <label className="text-xs font-bold text-gray-800 dark:text-slate-200 uppercase tracking-wider">Website Main Logo</label>
+                  <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded-full">Header Logo</span>
                 </div>
-                <p className="text-xs text-gray-500 mb-4">Official logo image displayed on Website Header and Admin Panel.</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">Official logo image displayed on Website Header and Admin Panel.</p>
 
                 {/* Logo Preview */}
-                <div className="flex items-center justify-center p-4 bg-white border border-gray-200 rounded-xl mb-4 min-h-[120px]">
+                <div className="flex items-center justify-center p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl mb-4 min-h-[120px]">
                   <img
                     src={settings.logoUrl || '/logo.png'}
                     alt="Logo Preview"
@@ -260,7 +260,7 @@ export const Settings: React.FC = () => {
                     type="button"
                     onClick={() => logoFileInputRef.current?.click()}
                     disabled={logoUploading}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-gray-300 hover:border-[#0058be] rounded-xl text-xs font-bold text-gray-700 hover:text-[#0058be] shadow-sm transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 hover:border-blue-600 dark:hover:border-blue-400 rounded-xl text-xs font-bold text-gray-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-all cursor-pointer"
                   >
                     <Upload className="w-4 h-4" />
                     <span>{logoUploading ? `Uploading (${logoProgress}%)...` : 'Upload New Logo Image'}</span>
@@ -268,14 +268,14 @@ export const Settings: React.FC = () => {
 
                   <div className="relative rounded-xl shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <LinkIcon className="h-4 w-4 text-gray-400" />
+                      <LinkIcon className="h-4 w-4 text-gray-400 dark:text-slate-500" />
                     </div>
                     <input
                       type="url"
                       value={settings.logoUrl}
                       onChange={(e) => setSettings({ ...settings, logoUrl: e.target.value })}
                       placeholder="Or paste Logo Image URL (https://...)"
-                      className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-xs bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be]"
+                      className="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-slate-700 rounded-xl text-xs bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     />
                   </div>
                 </div>
@@ -284,33 +284,33 @@ export const Settings: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSettings({ ...settings, logoUrl: '/logo.png' })}
-                className="text-[11px] font-semibold text-gray-500 hover:text-gray-900 underline text-center"
+                className="text-[11px] font-semibold text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white underline text-center cursor-pointer"
               >
                 Reset to Default HD Logo
               </button>
             </div>
 
             {/* Favicon Card */}
-            <div className="bg-gray-50/80 p-5 rounded-2xl border border-gray-200/60 flex flex-col justify-between space-y-4">
+            <div className="bg-gray-50/80 dark:bg-slate-800/60 p-5 rounded-2xl border border-gray-200/60 dark:border-slate-700/60 flex flex-col justify-between space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-gray-800 uppercase tracking-wider">Website Favicon</label>
-                  <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Browser Tab Icon</span>
+                  <label className="text-xs font-bold text-gray-800 dark:text-slate-200 uppercase tracking-wider">Website Favicon</label>
+                  <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full">Browser Tab Icon</span>
                 </div>
-                <p className="text-xs text-gray-500 mb-4">Icon displayed next to Website Title in Browser Tabs.</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">Icon displayed next to Website Title in Browser Tabs.</p>
 
                 {/* Favicon Browser Tab Mockup Preview */}
-                <div className="p-4 bg-white border border-gray-200 rounded-xl mb-4 min-h-[120px] flex flex-col justify-center items-center">
-                  <div className="w-full max-w-[220px] bg-gray-200/70 p-2 rounded-t-xl border border-gray-300 flex items-center gap-2">
+                <div className="p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl mb-4 min-h-[120px] flex flex-col justify-center items-center">
+                  <div className="w-full max-w-[220px] bg-gray-200/70 dark:bg-slate-800 p-2 rounded-t-xl border border-gray-300 dark:border-slate-700 flex items-center gap-2">
                     <img
                       src={settings.faviconUrl || '/logo.png'}
                       alt="Favicon Preview"
                       className="w-4 h-4 object-cover rounded flex-shrink-0"
                       onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png'; }}
                     />
-                    <span className="text-[11px] font-bold text-gray-700 truncate">{settings.siteName || 'Top News'}</span>
+                    <span className="text-[11px] font-bold text-gray-700 dark:text-slate-200 truncate">{settings.siteName || 'Top News'}</span>
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-2 font-medium">Browser Tab Preview</p>
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-2 font-medium">Browser Tab Preview</p>
                 </div>
 
                 {/* Upload Buttons & Link input */}
@@ -326,7 +326,7 @@ export const Settings: React.FC = () => {
                     type="button"
                     onClick={() => faviconFileInputRef.current?.click()}
                     disabled={faviconUploading}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-gray-300 hover:border-[#0058be] rounded-xl text-xs font-bold text-gray-700 hover:text-[#0058be] shadow-sm transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 hover:border-blue-600 dark:hover:border-blue-400 rounded-xl text-xs font-bold text-gray-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-all cursor-pointer"
                   >
                     <Upload className="w-4 h-4" />
                     <span>{faviconUploading ? `Uploading (${faviconProgress}%)...` : 'Upload New Favicon Image'}</span>
@@ -334,14 +334,14 @@ export const Settings: React.FC = () => {
 
                   <div className="relative rounded-xl shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <LinkIcon className="h-4 w-4 text-gray-400" />
+                      <LinkIcon className="h-4 w-4 text-gray-400 dark:text-slate-500" />
                     </div>
                     <input
                       type="url"
                       value={settings.faviconUrl}
                       onChange={(e) => setSettings({ ...settings, faviconUrl: e.target.value })}
                       placeholder="Or paste Favicon Image URL (https://...)"
-                      className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-xs bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be]"
+                      className="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-slate-700 rounded-xl text-xs bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     />
                   </div>
                 </div>
@@ -350,7 +350,7 @@ export const Settings: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSettings({ ...settings, faviconUrl: '/logo.png' })}
-                className="text-[11px] font-semibold text-gray-500 hover:text-gray-900 underline text-center"
+                className="text-[11px] font-semibold text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white underline text-center cursor-pointer"
               >
                 Reset to Default Favicon
               </button>
@@ -359,15 +359,15 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* Section 2: General Information */}
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm space-y-6">
-          <div className="flex items-center gap-2.5 pb-4 border-b border-gray-100">
-            <Globe className="w-5 h-5 text-[#0058be]" />
-            <h2 className="text-lg font-bold text-gray-900">General Information</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200/80 dark:border-slate-800 p-6 shadow-sm space-y-6 transition-colors">
+          <div className="flex items-center gap-2.5 pb-4 border-b border-gray-100 dark:border-slate-800">
+            <Globe className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">General Information</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Website Name
               </label>
               <input
@@ -375,52 +375,51 @@ export const Settings: React.FC = () => {
                 required
                 value={settings.siteName}
                 onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
-                className="block w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be]"
+                className="block w-full px-4 py-2.5 border border-gray-300 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 placeholder="TOP NEWS"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Tagline / Description
               </label>
               <input
                 type="text"
                 value={settings.siteTagline}
                 onChange={(e) => setSettings({ ...settings, siteTagline: e.target.value })}
-                className="block w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be]"
+                className="block w-full px-4 py-2.5 border border-gray-300 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 placeholder="Breaking News & Latest Updates"
               />
             </div>
-
-            </div>
+          </div>
         </div>
 
         {/* Section 2.5: Appearance & Theme Mode */}
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm space-y-6">
-          <div className="flex items-center gap-2.5 pb-4 border-b border-gray-100">
-            <Sparkles className="w-5 h-5 text-amber-500" />
-            <h2 className="text-lg font-bold text-gray-900">Appearance & Theme Mode</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200/80 dark:border-slate-800 p-6 shadow-sm space-y-6 transition-colors">
+          <div className="flex items-center gap-2.5 pb-4 border-b border-gray-100 dark:border-slate-800">
+            <Sparkles className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Appearance & Theme Mode</h2>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-gray-50/80 rounded-xl border border-gray-200/60">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-gray-50/80 dark:bg-slate-800/60 rounded-xl border border-gray-200/60 dark:border-slate-700/60">
             <div>
-              <h3 className="text-sm font-bold text-gray-900">Dark / Light Theme Toggle</h3>
-              <p className="text-xs text-gray-500">Switch between sleek dark theme and clean light theme across admin dashboard.</p>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">Dark / Light Theme Toggle</h3>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Switch between sleek dark theme and clean light theme across admin dashboard.</p>
             </div>
             <ThemeToggle showText />
           </div>
         </div>
 
         {/* Section 3: Security & Access Control */}
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm space-y-6">
-          <div className="flex items-center gap-2.5 pb-4 border-b border-gray-100">
-            <Key className="w-5 h-5 text-[#0058be]" />
-            <h2 className="text-lg font-bold text-gray-900">Security & Master Key</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200/80 dark:border-slate-800 p-6 shadow-sm space-y-6 transition-colors">
+          <div className="flex items-center gap-2.5 pb-4 border-b border-gray-100 dark:border-slate-800">
+            <Key className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Security & Master Key</h2>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Admin Master Security Key
             </label>
             <div className="relative rounded-xl shadow-sm max-w-md">
@@ -428,18 +427,18 @@ export const Settings: React.FC = () => {
                 type={showKey ? 'text' : 'password'}
                 value={settings.masterKey}
                 onChange={(e) => setSettings({ ...settings, masterKey: e.target.value })}
-                className="block w-full pl-4 pr-12 py-2.5 border border-gray-300 rounded-xl text-sm font-mono bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be]"
+                className="block w-full pl-4 pr-12 py-2.5 border border-gray-300 dark:border-slate-700 rounded-xl text-sm font-mono bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 placeholder="TOPNEWS2026"
               />
               <button
                 type="button"
                 onClick={() => setShowKey(!showKey)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200"
               >
                 {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1.5">Master Key used for resetting admin password securely.</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1.5">Master Key used for resetting admin password securely.</p>
           </div>
         </div>
 
