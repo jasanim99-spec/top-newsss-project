@@ -392,34 +392,7 @@ export const Settings: React.FC = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                Main Website URL
-              </label>
-              <input
-                type="url"
-                value={settings.mainWebsiteUrl || 'http://localhost:8080'}
-                onChange={(e) => setSettings({ ...settings, mainWebsiteUrl: e.target.value })}
-                className="block w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be]"
-                placeholder="http://localhost:8080"
-              />
-              <p className="text-[11px] text-gray-500 mt-1">Live user-facing news website URL.</p>
             </div>
-
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                Admin Panel URL
-              </label>
-              <input
-                type="url"
-                value={settings.adminUrl || 'http://localhost:5173'}
-                onChange={(e) => setSettings({ ...settings, adminUrl: e.target.value })}
-                className="block w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be]"
-                placeholder="http://localhost:5173"
-              />
-              <p className="text-[11px] text-gray-500 mt-1">Admin console URL for editorial staff.</p>
-            </div>
-          </div>
         </div>
 
         {/* Section 3: Security & Access Control */}
