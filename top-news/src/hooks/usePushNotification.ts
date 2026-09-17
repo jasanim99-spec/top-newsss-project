@@ -35,7 +35,7 @@ export function usePushNotification() {
 
   const subscribe = async () => {
     if (!supported) {
-      toast.error('આ બ્રાઉઝર Push Notification સપોર્ટ નથી કરતું.');
+      toast.error('Push Notifications are not supported in this browser.');
       return;
     }
 
@@ -46,7 +46,7 @@ export function usePushNotification() {
       setPermission(perm);
 
       if (perm === 'denied') {
-        toast.error('❌ Notification Blocked છે! બ્રાઉઝર ની ઉપર 🔒 Lock આઈકન પર ક્લિક કરી Allow સેલેક્ટ કરો.');
+        toast.error('❌ Notifications are blocked! Click the lock icon in your address bar to allow permissions.');
         setLoading(false);
         return;
       }
@@ -90,10 +90,10 @@ export function usePushNotification() {
       }
 
       setSubscribed(true);
-      toast.success('🎉 Push Notifications સબસ્ક્રાઇબ થઈ ગયું છે!');
+      toast.success('🎉 Push Notifications subscribed successfully!');
     } catch (err: any) {
       console.error('Push subscription error:', err);
-      toast.error(err.message || 'Notification subscribe કરવામાં ભૂલ આવી.');
+      toast.error(err.message || 'Failed to subscribe to push notifications.');
     } finally {
       setLoading(false);
     }
@@ -114,10 +114,10 @@ export function usePushNotification() {
         await sub.unsubscribe();
       }
       setSubscribed(false);
-      toast.info('Notifications અનસબસ્ક્રાઇબ કરી દેવાયું છે.');
+      toast.info('Notifications unsubscribed successfully.');
     } catch (err) {
       console.error('Unsubscribe error:', err);
-      toast.error('Unsubscribe કરવામાં ભૂલ આવી.');
+      toast.error('Failed to unsubscribe from notifications.');
     } finally {
       setLoading(false);
     }

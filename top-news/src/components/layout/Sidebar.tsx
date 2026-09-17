@@ -229,7 +229,7 @@ export function Sidebar() {
             <h3 className="text-base font-semibold">Breaking News Alerts</h3>
           </div>
           <p className="text-sm text-muted-foreground mb-3">
-            Instant notifications melo jyare breaking news aave
+            Get instant browser alerts whenever breaking news happens.
           </p>
           <Button
             onClick={subscribed ? unsubscribe : subscribe}
