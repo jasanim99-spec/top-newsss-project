@@ -69,6 +69,7 @@ function App() {
               <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
                 <Route path="/" element={<Layout />}>
                   <Route index element={<Dashboard />} />
+                  <Route path="dashboard" element={<Dashboard />} />
                   
                   {/* News & Editorial Review Routes */}
                   <Route path="news/reviews" element={<PendingReviews />} />

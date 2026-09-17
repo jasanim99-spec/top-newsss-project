@@ -30,9 +30,9 @@ const Layout: React.FC = () => {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 shadow-2xl px-2 py-1.5">
         <div className="flex items-center justify-around max-w-md mx-auto">
           <Link
-            to="/dashboard"
+            to="/"
             className={`flex flex-col items-center justify-center w-14 py-1 transition-all ${
-              isActive('/dashboard') ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-white'
+              isActive('/') || isActive('/dashboard') ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-white'
             }`}
           >
             <LayoutDashboard className="w-5 h-5" />
