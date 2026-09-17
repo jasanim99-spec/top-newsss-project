@@ -13,7 +13,7 @@ const Layout: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-[#191c1d] font-sans antialiased overflow-x-hidden">
+    <div className="min-h-screen bg-[#f8f9fa] dark:bg-slate-950 text-[#191c1d] dark:text-slate-100 font-sans antialiased overflow-x-hidden transition-colors">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
 

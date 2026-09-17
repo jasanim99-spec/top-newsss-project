@@ -470,6 +470,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useNewsStore } from "@/store/newsStore"
 import { AdSubmissionModal } from "@/components/ads/AdSubmissionModal"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 const navigationItems = [
   { name: "HOME", href: "/" },
@@ -680,6 +681,9 @@ export function Header() {
                 </SelectContent>
               </Select>
 
+              {/* Theme Toggle */}
+              <ThemeToggle />
+
               {/* Submit Ad Campaign Request Button */}
               <button
                 onClick={() => setIsAdModalOpen(true)}
@@ -692,6 +696,7 @@ export function Header() {
 
             {/* Mobile Controls Trigger */}
             <div className="lg:hidden flex items-center space-x-2">
+              <ThemeToggle />
               <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
                   <Button
@@ -724,7 +729,7 @@ export function Header() {
                     </form>
 
                     {/* Mobile Language Selector */}
-                    <div className="mb-6">
+                    <div className="mb-4">
                       <Select value={currentLanguage} onValueChange={handleLanguageChange}>
                         <SelectTrigger className="w-full bg-slate-800 border-slate-700 text-white">
                           <Globe className="h-4 w-4 mr-2 text-cyan-400" />
@@ -738,6 +743,12 @@ export function Header() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    {/* Mobile Theme Toggle */}
+                    <div className="mb-6 flex items-center justify-between p-3 bg-slate-800/80 rounded-2xl border border-slate-700/60">
+                      <span className="text-xs font-bold text-slate-300">Theme</span>
+                      <ThemeToggle showText />
                     </div>
 
                     {/* Mobile Category Links */}

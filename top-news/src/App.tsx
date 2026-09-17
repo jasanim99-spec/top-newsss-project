@@ -17,6 +17,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy"
 import TermsOfUse from "./pages/TermsOfUse"
 import Sitemap from "./pages/Sitemap"
 import { MobileBottomDock } from "@/components/layout/MobileBottomDock";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 import { useEffect } from 'react';
 import { initSocketClient } from '@/services/socketService';
@@ -151,41 +152,43 @@ function AdminRedirect() {
 }
 
 const App = () => (
-  <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <SiteSettingsManager />
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/admin" element={<AdminRedirect />} />
-            <Route path="/article/:language/:category/:topic/:slug" element={<ArticlePage />} />
-            <Route path="/article/:category/:topic/:slug" element={<ArticlePage />} />
-            <Route path="/article/:category/:slug" element={<ArticlePage />} />
-            <Route path="/article/:slug" element={<ArticlePage />} />
-            <Route path="/video/:language/:category/:topic/:slug" element={<VideoPage />} />
-            <Route path="/video/:category/:slug" element={<VideoPage />} />
-            <Route path="/video/:slug" element={<VideoPage />} />
-            <Route path="/category/:category" element={<CategoryPage />} />
-            <Route path="/videos" element={<VideoPage />} />
-            <Route path="/search" element={<SearchPage />} />
-            
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/advertise" element={<Advertise />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsOfUse />} />
-            <Route path="/sitemap" element={<Sitemap />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <MobileBottomDock />
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </HelmetProvider>
+  <ThemeProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <SiteSettingsManager />
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/admin" element={<AdminRedirect />} />
+              <Route path="/article/:language/:category/:topic/:slug" element={<ArticlePage />} />
+              <Route path="/article/:category/:topic/:slug" element={<ArticlePage />} />
+              <Route path="/article/:category/:slug" element={<ArticlePage />} />
+              <Route path="/article/:slug" element={<ArticlePage />} />
+              <Route path="/video/:language/:category/:topic/:slug" element={<VideoPage />} />
+              <Route path="/video/:category/:slug" element={<VideoPage />} />
+              <Route path="/video/:slug" element={<VideoPage />} />
+              <Route path="/category/:category" element={<CategoryPage />} />
+              <Route path="/videos" element={<VideoPage />} />
+              <Route path="/search" element={<SearchPage />} />
+              
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/advertise" element={<Advertise />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfUse />} />
+              <Route path="/sitemap" element={<Sitemap />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <MobileBottomDock />
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
+  </ThemeProvider>
 );
 
 export default App;

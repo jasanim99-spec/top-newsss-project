@@ -3,6 +3,7 @@ import { Menu, Search, Bell, Settings, Plus, LogOut, FileText, Video, Globe, Ext
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { settingsService } from '@/services/settingsService';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface HeaderProps {
   title?: string;
@@ -81,6 +82,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <span>View Website</span>
           <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-indigo-600" />
         </a>
+
+        {/* Theme Toggle Button */}
+        <ThemeToggle />
 
         {/* Notification Icon with Pulsing Dot */}
         <button 

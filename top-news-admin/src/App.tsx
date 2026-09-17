@@ -16,6 +16,7 @@ import Login from './pages/Login';
 import AccessDenied from './pages/AccessDenied';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import AdsList from './pages/Ads/AdsList';
 import PushNotify from './pages/Notifications/PushNotify';
 
@@ -43,62 +44,64 @@ function App() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/access-denied" element={<AccessDenied />} />
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/access-denied" element={<AccessDenied />} />
 
-            {/* REPORTER PORTAL ROUTES */}
-            <Route element={<ProtectedRoute allowedRoles={['reporter', 'admin']} />}>
-              <Route path="/reporter" element={<ReporterLayout />}>
-                <Route index element={<ReporterDashboard />} />
-                <Route path="dashboard" element={<ReporterDashboard />} />
-                <Route path="submit" element={<SubmitNews />} />
-                <Route path="articles" element={<MyArticles />} />
-                <Route path="goals" element={<ReporterGoals />} />
-                <Route path="press-card" element={<PressCardPage />} />
-                <Route path="leaves" element={<LeaveManagement />} />
+              {/* REPORTER PORTAL ROUTES */}
+              <Route element={<ProtectedRoute allowedRoles={['reporter', 'admin']} />}>
+                <Route path="/reporter" element={<ReporterLayout />}>
+                  <Route index element={<ReporterDashboard />} />
+                  <Route path="dashboard" element={<ReporterDashboard />} />
+                  <Route path="submit" element={<SubmitNews />} />
+                  <Route path="articles" element={<MyArticles />} />
+                  <Route path="goals" element={<ReporterGoals />} />
+                  <Route path="press-card" element={<PressCardPage />} />
+                  <Route path="leaves" element={<LeaveManagement />} />
+                </Route>
               </Route>
-            </Route>
 
-            {/* ADMIN ROUTES */}
-            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Dashboard />} />
-                
-                {/* News & Editorial Review Routes */}
-                <Route path="news/reviews" element={<PendingReviews />} />
-                <Route path="news" element={<NewsList />} />
-                <Route path="leaves" element={<LeaveManagement />} />
-                <Route path="ads" element={<AdsList />} />
-                <Route path="news/create" element={<NewsForm />} />
-                <Route path="news/:id/edit" element={<NewsForm />} />
-                <Route path="news/:id/view" element={<NewsDetail />} />
-                
-                {/* Videos Routes */}
-                <Route path="videos" element={<VideosList />} />
-                <Route path="videos/create" element={<VideoForm />} />
-                <Route path="videos/:id/edit" element={<VideoForm />} />
+              {/* ADMIN ROUTES */}
+              <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Dashboard />} />
+                  
+                  {/* News & Editorial Review Routes */}
+                  <Route path="news/reviews" element={<PendingReviews />} />
+                  <Route path="news" element={<NewsList />} />
+                  <Route path="leaves" element={<LeaveManagement />} />
+                  <Route path="ads" element={<AdsList />} />
+                  <Route path="news/create" element={<NewsForm />} />
+                  <Route path="news/:id/edit" element={<NewsForm />} />
+                  <Route path="news/:id/view" element={<NewsDetail />} />
+                  
+                  {/* Videos Routes */}
+                  <Route path="videos" element={<VideosList />} />
+                  <Route path="videos/create" element={<VideoForm />} />
+                  <Route path="videos/:id/edit" element={<VideoForm />} />
 
-                {/* Team & Journalists Route */}
-                <Route path="team" element={<TeamManagement />} />
+                  {/* Team & Journalists Route */}
+                  <Route path="team" element={<TeamManagement />} />
 
-                {/* Settings Route */}
-                <Route path="settings" element={<Settings />} />
+                  {/* Settings Route */}
+                  <Route path="settings" element={<Settings />} />
 
-                {/* Push Notifications */}
-                <Route path="notifications" element={<PushNotify />} />
+                  {/* Push Notifications */}
+                  <Route path="notifications" element={<PushNotify />} />
+                </Route>
               </Route>
-            </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Login />} />
-          </Routes>
-        </Router>
-      </AuthProvider>
-    </QueryClientProvider>
+              {/* Fallback */}
+              <Route path="*" element={<Login />} />
+            </Routes>
+          </Router>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

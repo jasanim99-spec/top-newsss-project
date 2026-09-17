@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { settingsService, SiteSettings } from '@/services/settingsService';
 import { storageService } from '@/services/storageService';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const Settings: React.FC = () => {
   const [settings, setSettings] = useState<SiteSettings>({
@@ -393,6 +394,22 @@ export const Settings: React.FC = () => {
             </div>
 
             </div>
+        </div>
+
+        {/* Section 2.5: Appearance & Theme Mode */}
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm space-y-6">
+          <div className="flex items-center gap-2.5 pb-4 border-b border-gray-100">
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-bold text-gray-900">Appearance & Theme Mode</h2>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-gray-50/80 rounded-xl border border-gray-200/60">
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Dark / Light Theme Toggle</h3>
+              <p className="text-xs text-gray-500">Switch between sleek dark theme and clean light theme across admin dashboard.</p>
+            </div>
+            <ThemeToggle showText />
+          </div>
         </div>
 
         {/* Section 3: Security & Access Control */}
