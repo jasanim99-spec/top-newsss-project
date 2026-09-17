@@ -159,3 +159,24 @@ CREATE TABLE IF NOT EXISTS site_settings (
     master_key VARCHAR(255),
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 8. Push Subscriptions Table
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    endpoint TEXT PRIMARY KEY,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    language VARCHAR(20) DEFAULT 'en',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. Push Notifications History Table
+CREATE TABLE IF NOT EXISTS push_notifications (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(500) NOT NULL,
+    body TEXT NOT NULL,
+    icon TEXT DEFAULT '/logo.png',
+    url TEXT DEFAULT '/',
+    sent_count INT DEFAULT 0,
+    sent_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
