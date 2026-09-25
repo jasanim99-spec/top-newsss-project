@@ -286,7 +286,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Active Reporters */}
         <div 
-          onClick={() => navigate('/reporters')}
+          onClick={() => navigate('/team')}
           className="bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/50 rounded-2xl border border-indigo-100 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
         >
           <div className="flex items-center gap-4">

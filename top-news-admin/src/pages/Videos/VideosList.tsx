@@ -171,9 +171,6 @@ const VideosList: React.FC = () => {
                   
                   <div className="p-5 space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200/60 text-xs rounded-full font-medium">
-                        {getLanguageName(video.language)}
-                      </span>
                       <span className="px-2.5 py-0.5 bg-purple-50 text-purple-700 border border-purple-200/60 text-xs rounded-full font-medium">
                         {video.category}
                       </span>

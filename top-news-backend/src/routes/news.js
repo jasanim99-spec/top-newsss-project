@@ -280,12 +280,27 @@ router.post('/', async (req, res) => {
     const views = typeof data.views === 'number' ? data.views : 0;
     const status = data.status || 'published';
     
-    // Check if author_id exists in users table to prevent FK constraint error
-    let authorId = data.authorId ? String(data.authorId).trim() : null;
+    // Check/upsert author_id in users table to satisfy FK constraint and ensure reporter queries work
+    let authorId = data.authorId ? String(data.authorId).trim() : (data.authorEmail ? String(data.authorEmail).trim() : null);
     if (authorId) {
-      const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [authorId]);
-      if (userCheck.rows.length === 0) {
-        authorId = null;
+      const authorName = data.authorName ? data.authorName.trim() : 'Reporter';
+      const authorEmail = data.authorEmail ? data.authorEmail.trim().toLowerCase() : (authorId.includes('@') ? authorId.toLowerCase() : `${authorId.replace(/[^a-zA-Z0-9_]/g, '')}@topnews.in`);
+      const authorRole = data.authorRole || 'reporter';
+      const pressCardNo = data.pressCardNo || null;
+      const authorCity = data.authorCity || null;
+
+      try {
+        await pool.query(`
+          INSERT INTO users (id, email, name, role, press_card_no, city, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+          ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name,
+            email = EXCLUDED.email,
+            role = EXCLUDED.role,
+            updated_at = NOW()
+        `, [authorId, authorEmail, authorName, authorRole, pressCardNo, authorCity]);
+      } catch (userErr) {
+        console.warn('Auto-upsert author warning:', userErr.message);
       }
     }
 
@@ -302,8 +317,8 @@ router.post('/', async (req, res) => {
 
     if (section === 'featured') {
       await pool.query(
-        `UPDATE news_articles SET section = 'main' WHERE section = 'featured' AND LOWER(language) = LOWER($1) AND id != $2`,
-        [language, articleId]
+        `UPDATE news_articles SET section = 'main' WHERE section = 'featured' AND id != $1`,
+        [articleId]
       );
     }
 
@@ -393,12 +408,25 @@ router.put('/:id', async (req, res) => {
     let authorId = (data.authorId !== undefined ? data.authorId : current.author_id) || null;
     if (authorId && String(authorId).trim() !== '') {
       authorId = String(authorId).trim();
-      const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [authorId]);
-      if (userCheck.rows.length === 0) {
-        authorId = null;
+      const authorName = data.authorName !== undefined ? data.authorName : (current.author_name || 'Reporter');
+      const authorEmail = data.authorEmail ? data.authorEmail.trim().toLowerCase() : (authorId.includes('@') ? authorId.toLowerCase() : `${authorId.replace(/[^a-zA-Z0-9_]/g, '')}@topnews.in`);
+      const authorRole = data.authorRole || current.author_role || 'reporter';
+
+      try {
+        await pool.query(`
+          INSERT INTO users (id, email, name, role, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, NOW(), NOW())
+          ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name,
+            email = EXCLUDED.email,
+            role = EXCLUDED.role,
+            updated_at = NOW()
+        `, [authorId, authorEmail, authorName, authorRole]);
+      } catch (userErr) {
+        console.warn('Auto-upsert author warning on update:', userErr.message);
       }
     } else {
-      authorId = null;
+      authorId = current.author_id || null;
     }
 
     const authorName = data.authorName !== undefined ? data.authorName : current.author_name;
@@ -412,12 +440,10 @@ router.put('/:id', async (req, res) => {
     const isBreaking = data.isBreaking !== undefined ? !!data.isBreaking : current.is_breaking;
     const publishedAt = data.publishedAt ? new Date(data.publishedAt).toISOString() : current.published_at;
 
-    // If this article is being set to 'featured', reset other featured articles ONLY in the same language
-    // so each language (English, Gujarati, etc.) can have its own dedicated Hero section article
     if (section === 'featured' && current.section !== 'featured') {
       await pool.query(
-        `UPDATE news_articles SET section = 'main' WHERE section = 'featured' AND LOWER(language) = LOWER($1) AND id != $2`,
-        [language, targetId]
+        `UPDATE news_articles SET section = 'main' WHERE section = 'featured' AND id != $1`,
+        [targetId]
       );
     }
 

@@ -21,7 +21,6 @@ const validationSchema = Yup.object({
   duration: Yup.number().min(1, 'Duration must be at least 1 second').required('Duration is required'),
   category: Yup.string().required('Category is required'),
   topic: Yup.string(),
-  language: Yup.string().required('Language is required'),
   section: Yup.string().required('Section is required'),
   status: Yup.string().oneOf(['draft', 'published']).required('Status is required'),
   publishedAt: Yup.string().required('Published date is required'),
@@ -263,7 +262,7 @@ const VideoForm: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Duration (seconds) *
@@ -275,24 +274,6 @@ const VideoForm: React.FC = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <ErrorMessage name="duration" component="div" className="text-red-600 text-sm mt-1" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Language *
-                  </label>
-                  <Field
-                    as="select"
-                    name="language"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    {LANGUAGE_OPTIONS.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.name}
-                      </option>
-                    ))}
-                  </Field>
-                  <ErrorMessage name="language" component="div" className="text-red-600 text-sm mt-1" />
                 </div>
 
                 <div>

@@ -1,0 +1,340 @@
+================================================================================
+          📰 TOP NEWS - FULL-STACK DIGITAL MEDIA & VIDEO PLATFORM
+              COMPLETE EXHAUSTIVE TECHNICAL DOCUMENTATION
+================================================================================
+Prepared For: Mentor Presentation & Project Review
+Date: September 2026
+Workspace Location: c:\Users\admin\Desktop\PostgreSQL-Top-News\post new project
+
+--------------------------------------------------------------------------------
+TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+1. PROJECT OVERVIEW & CONCEPT (પ્રોજેક્ટ પરિચય)
+2. ARCHITECTURE & TECH STACK (આર્કિટેક્ચર અને ટેકનોલોજી)
+3. COMPLETE DIRECTORY & FILE STRUCTURE (ફોલ્ડર અને ફાઇલ સ્ટ્રક્ચર)
+4. FRONTEND PUBLIC WEBSITE (top-news)
+5. FRONTEND ADMIN CONSOLE & REPORTER PORTAL (top-news-admin)
+6. BACKEND EXPRESS API SERVER (top-news-backend)
+7. POSTGRESQL DATABASE SCHEMAS & NEON CLOUD SETUP
+8. LIVE SYSTEM URLS & CONNECTION CREDENTIALS
+9. STEP-BY-STEP MENTOR PRESENTATION SCRIPT (મેન્ટરને એક્સપ્લેન કરવાની ગાઈડ)
+
+================================================================================
+1. PROJECT OVERVIEW & CONCEPT (પ્રોજેક્ટ પરિચય)
+================================================================================
+TOP NEWS is a next-generation, production-grade digital news publishing and 
+short-video streaming platform. It connects public news readers, field journalists/
+reporters, chief editors, and advertisers into a unified real-time system.
+
+Key Capabilities:
+1. Multi-Lingual News Engine: Serves news articles and short video clips across
+   multiple languages (Gujarati, Hindi, English).
+2. Short Video Reels Streamer: Custom HTML5 & YouTube Shorts video player with
+   CORS-safe high-speed CDN playback.
+3. Role-Based Editorial Desk: Dedicated workflows for Chief Editors ('admin') and
+   Accredited Journalists ('reporter').
+4. Advertisement Revenue Hub: Full banner campaign management with click counter
+   analytics and client request approval workflow.
+5. Web Push Broadcast: Browser notification engine using Web Push API & VAPID keys.
+6. Dark & Light Theme System: Responsive UI/UX with active local persistence.
+7. Mobile-First Architecture: 100% responsive dock, zero overflow layout, 4-column
+   equal grids for mobile screens.
+
+================================================================================
+2. ARCHITECTURE & TECH STACK (આર્કિટેક્ચર અને ટેકનોલોજી)
+================================================================================
+The project follows a 3-Tier Enterprise Architecture:
+
+[ Public Website (React) ] <---> [ Node.js Express API Server ] <---> [ Neon Cloud PostgreSQL ]
+[ Admin Console (React) ] <-----------------------------------------> [ Firebase Auth & Storage ]
+
+Technology Stack Breakdown:
+--------------------------------------------------------------------------------
+Layer                   | Technology Used                  | Role
+--------------------------------------------------------------------------------
+Public Website          | React 18, TypeScript, Vite,     | Fast news reading, video
+                        | TailwindCSS, Framer Motion      | reels player, search & filter
+--------------------------------------------------------------------------------
+Admin & Reporter Console| React 18, TypeScript, Vite,     | Article CRUD, video manager,
+                        | Lucide Icons, React Query        | leaves, press card, ads manager
+--------------------------------------------------------------------------------
+Backend API Server      | Node.js, Express.js, Socket.IO,  | REST endpoints, real-time sync,
+                        | PostgreSQL 'pg' driver          | push notifications, server stats
+--------------------------------------------------------------------------------
+Primary Cloud Database  | Neon Cloud PostgreSQL DB        | Relational data store for news,
+                        | (serverless PostgreSQL)         | videos, ads, leaves & users
+--------------------------------------------------------------------------------
+Media Storage & Auth    | Firebase Storage & Auth         | Images & video file hosting,
+                        | (browserLocalPersistence)        | persistent authentication
+--------------------------------------------------------------------------------
+Deployment Platform     | Vercel Cloud Platform           | Global CDN hosting & CI/CD
+--------------------------------------------------------------------------------
+
+================================================================================
+3. COMPLETE DIRECTORY & FILE STRUCTURE (ફોલ્ડર અને ફાઇલ સ્ટ્રક્ચર)
+================================================================================
+The workspace contains 3 main application folders:
+
+post new project/
+│
+├── project-docs/
+│   └── TOP_NEWS_PROJECT_COMPLETE_DOCUMENTATION.txt  <-- [This File]
+│
+├── top-news/                                         <-- [Public Website]
+│   ├── public/                                      <-- Static assets & logo
+│   └── src/
+│       ├── components/
+│       │   ├── layout/                              <-- Header, Footer, Sidebar
+│       │   ├── news/                                <-- NewsCard, VideoCard
+│       │   ├── sections/                            <-- HeroSection, FeaturedSection
+│       │   └── ui/                                  <-- Select, Button, ThemeToggle
+│       ├── context/                                 <-- ThemeContext.tsx
+│       ├── pages/                                   <-- HomePage, VideoPage, CategoryPage
+│       ├── services/                                <-- api.ts, videoService.ts
+│       ├── store/                                   <-- newsStore.ts (Zustand state)
+│       └── App.tsx                                  <-- App routes & ThemeProvider
+│
+├── top-news-admin/                                   <-- [Admin & Reporter Panel]
+│   ├── public/                                      <-- Admin logo & icons
+│   └── src/
+│       ├── components/                              <-- ProtectedRoute, ThemeToggle
+│       │   └── Layout/                              <-- Header, Sidebar, Layout (Mobile Dock)
+│       ├── context/                                 <-- AuthContext, ThemeContext
+│       ├── firebase/                                <-- auth.ts, firestore.ts, config.ts
+│       ├── pages/
+│       │   ├── Dashboard.tsx                        <-- Admin Dashboard Stats
+│       │   ├── Login.tsx                            <-- Auth Login Page
+│       │   ├── Ads/                                 <-- AdsList.tsx, AdsForm.tsx
+│       │   ├── News/                                <-- NewsList.tsx, NewsForm.tsx
+│       │   ├── Notifications/                       <-- PushNotify.tsx
+│       │   ├── Reporter/                            <-- ReporterLayout, LeaveManagement, PressCardPage
+│       │   ├── Settings.tsx                         <-- Site settings & logo upload
+│       │   └── Videos/                              <-- VideosList.tsx, VideoForm.tsx
+│       └── App.tsx                                  <-- Admin Router & Auth Guard
+│
+└── top-news-backend/                                 <-- [Node.js PostgreSQL API]
+    ├── api/                                         <-- Vercel entrypoint (index.js)
+    ├── scripts/                                     <-- seed_videos.js, test_db.js
+    ├── src/
+    │   ├── db/                                      <-- index.js (PostgreSQL Pool)
+    │   ├── routes/                                  <-- news.js, videos.js, ads.js, leaves.js, notifications.js
+    │   ├── socket.js                                <-- Real-time Socket.IO handler
+    │   └── index.js                                 <-- Express server setup & router mounts
+    ├── vercel.json                                  <-- Serverless deployment config
+    └── .env                                         <-- DB credentials & VAPID keys
+
+================================================================================
+4. FRONTEND PUBLIC WEBSITE (top-news)
+================================================================================
+Key Components & Functionality:
+
+1. Header.tsx & Mobile Drawer:
+   - Includes logo, category links, search input bar, and ThemeToggle button.
+   - Mobile drawer for seamless screen navigation on phones.
+
+2. HeroSection.tsx & FeaturedSection.tsx:
+   - Displays breaking news, featured stories ('is_hero = true'), and trending topics.
+
+3. VideoPage.tsx (Custom Video Player Engine):
+   - Handles single video viewing and video listing grid.
+   - Automatically detects YouTube Shorts links (e.g., youtube.com/shorts/...) and
+     embeds them in an iframe player with autoplay.
+   - Plays direct high-speed HTML5 MP4 videos with 'playsInline', 'preload="auto"', and
+     'controls' attributes.
+
+4. Dark / Light Theme Engine (ThemeContext.tsx):
+   - Toggles 'dark' class on HTML document root.
+   - Adapts backgrounds, text colours, card borders, and input fields dynamically.
+
+================================================================================
+5. FRONTEND ADMIN CONSOLE & REPORTER PORTAL (top-news-admin)
+================================================================================
+Key Modules & Workflows:
+
+1. Authentication & Session Stability (firebase/auth.ts & AuthContext.tsx):
+   - Uses 'browserLocalPersistence' so mobile Chrome/Safari tabs never lose login
+     session during page reloads or Home button navigation.
+   - Role-Based Guard ('ProtectedRoute.tsx'): Allows 'admin' access to editorial management
+     and 'reporter' access to Reporter Desk.
+
+2. Mobile Bottom Dock (Layout.tsx):
+   - Fixed mobile bottom navigation dock containing Home, Articles, + New, Ads, and Settings.
+   - Configured with clean route targets ('/') to eliminate login redirects.
+
+3. News & Articles Management (NewsList.tsx & NewsForm.tsx):
+   - Full CRUD operations (Create, Edit, Delete, Draft, Publish).
+   - 1-Click 'Set as Hero' toggle to feature articles on the website homepage.
+   - Responsive 2-column mobile action button grid preventing screen clipping.
+
+4. Short Videos Management (VideosList.tsx & VideoForm.tsx):
+   - Manage vertical short video reels and 16:9 news clips.
+   - Multi-key API compatibility (supports both 'videos' and 'articles' JSON keys).
+
+5. Advertisement Manager (AdsList.tsx & AdsForm.tsx):
+   - Manage website sidebar banners, top header ads, and in-feed ads.
+   - Equal 2-column mobile tab layout (Active Campaigns vs Client Requests).
+   - Approve / Reject client ad campaign requests with click analytics tracking.
+
+6. Reporter Leave Management (LeaveManagement.tsx):
+   - Reporters apply for Casual, Medical, or Duty Leave.
+   - Editors approve or reject leave requests.
+   - Responsive 4-column equal grid filter bar (ALL, PENDING, APPROVED, REJECTED).
+
+================================================================================
+6. BACKEND EXPRESS API SERVER (top-news-backend)
+================================================================================
+Routes & Endpoints:
+
+1. News Endpoints:
+   - GET /news or /api/news                : List published news with filters & pagination
+   - GET /news/:id or /api/news/:id        : Fetch article details by ID or slug
+   - POST /news or /api/news              : Create new article
+   - PUT /news/:id or /api/news/:id        : Update existing article
+   - DELETE /news/:id or /api/news/:id     : Soft-delete / remove article
+   - PATCH /news/:id/hero                  : Toggle homepage Hero section feature
+
+2. Short Videos Endpoints:
+   - GET /short-videos or /api/short-videos : List short videos with category & topic filters
+   - GET /short-videos/:id                 : Fetch video by ID or slug
+   - POST /short-videos                    : Create short video reel
+   - PUT /short-videos/:id                 : Update video metadata
+   - PATCH /short-videos/:id/views         : Atomically increment view count
+   - DELETE /short-videos/:id              : Delete video reel
+
+3. Advertisements Endpoints:
+   - GET /ads or /api/ads                  : Fetch active display ads for website
+   - POST /ads/requests                    : Client ad campaign submission
+   - PATCH /ads/requests/:id/approve       : Admin approval of client ad request
+   - PATCH /ads/:id/click                  : Increment ad click count
+
+4. Reporter Leaves Endpoints:
+   - GET /leaves or /api/leaves            : Fetch leave requests
+   - POST /leaves                          : Submit new leave request
+   - PATCH /leaves/:id/status              : Update leave status ('approved' / 'rejected')
+
+================================================================================
+7. POSTGRESQL DATABASE SCHEMAS & NEON CLOUD SETUP
+================================================================================
+Database Name: neondb
+Host: ep-plain-thunder-b38559px-pooler.c-4.ap-southeast-1.aws.neon.tech
+SSL Mode: Require
+
+Core Tables SQL Schema:
+
+-- 1. News Articles Table
+CREATE TABLE IF NOT EXISTS news_articles (
+  id VARCHAR(128) PRIMARY KEY,
+  title VARCHAR(500) NOT NULL,
+  slug VARCHAR(500) UNIQUE NOT NULL,
+  content TEXT,
+  summary TEXT,
+  category VARCHAR(100),
+  topic VARCHAR(100),
+  language VARCHAR(20) DEFAULT 'en',
+  image_url TEXT,
+  author_name VARCHAR(100),
+  views INTEGER DEFAULT 0,
+  is_hero BOOLEAN DEFAULT false,
+  status VARCHAR(20) DEFAULT 'published',
+  published_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Short Videos Table
+CREATE TABLE IF NOT EXISTS short_videos (
+  id VARCHAR(128) PRIMARY KEY,
+  title VARCHAR(500) NOT NULL,
+  slug VARCHAR(500) UNIQUE NOT NULL,
+  description TEXT,
+  video_url TEXT NOT NULL,
+  thumbnail_url TEXT,
+  duration INTEGER DEFAULT 0,
+  category VARCHAR(100),
+  topic VARCHAR(100),
+  language VARCHAR(20) DEFAULT 'en',
+  section VARCHAR(50) DEFAULT 'main',
+  views INTEGER DEFAULT 0,
+  status VARCHAR(20) DEFAULT 'published',
+  published_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. Advertisements Table
+CREATE TABLE IF NOT EXISTS advertisements (
+  id VARCHAR(128) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  image_url TEXT NOT NULL,
+  link_url TEXT NOT NULL,
+  position VARCHAR(50) DEFAULT 'sidebar',
+  click_count INTEGER DEFAULT 0,
+  client_name VARCHAR(255),
+  client_email VARCHAR(255),
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 4. Reporter Leaves Table
+CREATE TABLE IF NOT EXISTS reporter_leaves (
+  id VARCHAR(128) PRIMARY KEY,
+  reporter_id VARCHAR(128),
+  reporter_name VARCHAR(255),
+  leave_type VARCHAR(100),
+  start_date VARCHAR(50),
+  end_date VARCHAR(50),
+  total_days INTEGER,
+  backup_reporter VARCHAR(255),
+  reason TEXT,
+  status VARCHAR(20) DEFAULT 'pending',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+================================================================================
+8. LIVE SYSTEM URLS & CONNECTION CREDENTIALS
+================================================================================
+1. Public Website       : https://top-newsss-project-ehji.vercel.app
+2. Admin Console        : https://top-newsss-project-rqnz.vercel.app
+3. Backend REST API     : https://top-newsss-project.vercel.app/api/health
+4. Short Videos API     : https://top-newsss-project.vercel.app/api/short-videos
+5. News Articles API    : https://top-newsss-project.vercel.app/api/news
+
+pgAdmin 4 / Neon DB Connection Credentials:
+- Host                  : ep-plain-thunder-b38559px-pooler.c-4.ap-southeast-1.aws.neon.tech
+- Database              : neondb
+- Username              : neondb_owner
+- Password              : npg_Zch7yLNazH2C
+- Port                  : 5432
+- SSL Mode              : Require
+
+================================================================================
+9. STEP-BY-STEP MENTOR PRESENTATION SCRIPT (મેન્ટરને એક્સપ્લેન કરવાની ગાઈડ)
+================================================================================
+You can present your project to your mentor using this structured conversation outline:
+
+Step 1: Introduction
+"Respected Sir/Madam, I have developed 'TOP NEWS', a full-stack digital news publishing
+and short video streaming application built with React, Node.js, Express, and PostgreSQL."
+
+Step 2: Database & Architecture Explanation
+"Our platform uses a 3-tier architecture. All news articles, short videos, ads, and leave 
+applications are stored in a cloud-hosted Neon PostgreSQL database. We migrated from 
+traditional Firestore to PostgreSQL to achieve structured relational queries, foreign key 
+integrity, and ultra-fast indexing."
+
+Step 3: Frontend Demonstration (Website & Admin)
+"The public website features dynamic multi-lingual news filtering, Dark/Light mode theme 
+switching, and an embedded HTML5 / YouTube Shorts player engine. The Admin Panel allows 
+editors to manage news articles, approve reporter leave applications, feature homepage hero 
+stories with 1-click, and manage advertisement campaigns."
+
+Step 4: Mobile Responsiveness & Real-World Fixes
+"We optimized the entire UI for mobile responsiveness—fixing button clipping with 4-column equal 
+grids, preventing horizontal overflow, implementing Web Push VAPID notifications, and configuring 
+browserLocalPersistence to keep admin sessions stable across mobile browser reloads."
+
+================================================================================
+                                END OF DOCUMENTATION
+================================================================================

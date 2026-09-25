@@ -230,7 +230,10 @@ const socialLinks = [
   },
 ];
 
+import { useUITranslator } from '@/utils/i18n';
+
 export function Footer() {
+  const { t } = useUITranslator();
   const [logoUrl, setLogoUrl] = useState('/logo.png');
   const [siteName, setSiteName] = useState('Top News');
 
@@ -283,13 +286,13 @@ export function Footer() {
                     </div>
                     <div>
                       <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">{siteName}</span>
-                      <div className="text-xs text-red-400 font-medium tracking-wider">BREAKING NEWS</div>
+                      <div className="text-xs text-red-400 font-medium tracking-wider">{t('BREAKING NEWS')}</div>
                     </div>
                   </a>
                 </div>
                 
                 <p className="text-gray-300 leading-relaxed text-sm">
-                  Your premier destination for breaking news, insightful analysis, and comprehensive coverage of global events. Stay ahead with real-time updates and trusted journalism.
+                  {t('Your premier destination for breaking news, insightful analysis, and comprehensive coverage of global events. Stay ahead with real-time updates and trusted journalism.')}
                 </p>
                 
                 {/* Contact info */}
@@ -331,7 +334,7 @@ export function Footer() {
               {/* Quick Links */}
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-white relative">
-                  Quick Links
+                  {t('Quick Links')}
                   <div className="absolute -bottom-2 left-0 w-8 h-0.5 bg-red-500"></div>
                 </h3>
                 <nav className="space-y-3">
@@ -342,7 +345,7 @@ export function Footer() {
                       className="flex items-center group text-gray-300 hover:text-white transition-all duration-200"
                     >
                       <ArrowRight className="h-3 w-3 mr-2 opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-200 text-red-400" />
-                      <span className="group-hover:translate-x-1 transition-transform duration-200">{link.name}</span>
+                      <span className="group-hover:translate-x-1 transition-transform duration-200">{t(link.name)}</span>
                     </a>
                   ))}
                 </nav>
@@ -351,7 +354,7 @@ export function Footer() {
               {/* Categories */}
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-white relative">
-                  Categories
+                  {t('Categories')}
                   <div className="absolute -bottom-2 left-0 w-8 h-0.5 bg-red-500"></div>
                 </h3>
                 <nav className="space-y-3">
@@ -362,7 +365,7 @@ export function Footer() {
                       className="flex items-center group text-gray-300 hover:text-white transition-all duration-200"
                     >
                       <ArrowRight className="h-3 w-3 mr-2 opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-200 text-red-400" />
-                      <span className="group-hover:translate-x-1 transition-transform duration-200">{category.name}</span>
+                      <span className="group-hover:translate-x-1 transition-transform duration-200">{t(category.name)}</span>
                     </a>
                   ))}
                 </nav>
@@ -375,25 +378,22 @@ export function Footer() {
             <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
               <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
                 <p className="text-sm text-gray-400 flex items-center">
-                  © {new Date().getFullYear()} Top News. Made with 
-                  <Heart className="h-4 w-4 text-red-500 mx-1 animate-pulse" />
-                  in Appifly Infotech
+                  © {new Date().getFullYear()} Top News. {t('All Rights Reserved')}
                 </p>
               </div>
               
               <div className="flex items-center space-x-6 text-sm">
                 <a href="/privacy" className="text-gray-400 hover:text-white transition-colors duration-200 hover:underline decoration-red-500">
-                  Privacy Policy
+                  {t('Privacy Policy')}
                 </a>
                 <div className="w-1 h-1 bg-gray-600 rounded-full"></div>
                 <a href="/terms" className="text-gray-400 hover:text-white transition-colors duration-200 hover:underline decoration-red-500">
-                  Terms of Service
+                  {t('Terms of Service')}
                 </a>
                 <div className="w-1 h-1 bg-gray-600 rounded-full"></div>
                 <a href="/contact" className="text-gray-400 hover:text-white transition-colors duration-200 hover:underline decoration-red-500">
-                  Contact Us
+                  {t('Contact Us')}
                 </a>
-
               </div>
             </div>
           </div>

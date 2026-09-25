@@ -8,6 +8,79 @@
   }
 }
 
+/* Global Dark Mode Fixes for Form Fields & Cards */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  background-color: #1e293b !important; /* bg-slate-800 */
+  color: #f8fafc !important; /* text-slate-50 */
+  border-color: #334155 !important; /* border-slate-700 */
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #94a3b8 !important; /* placeholder slate-400 */
+}
+
+.dark select option {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* Dark mode for white cards & containers */
+.dark .bg-white {
+  background-color: #0f172a !important; /* bg-slate-900 */
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+.dark .bg-slate-50,
+.dark [class*="bg-slate-50"],
+.dark [class*="bg-slate-100"],
+.dark .bg-gray-50,
+.dark [class*="bg-gray-50"] {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700,
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700 {
+  color: #f1f5f9 !important;
+}
+
+.dark .text-slate-600,
+.dark .text-slate-500,
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  color: #cbd5e1 !important;
+}
+
+.dark .border-slate-200,
+.dark .border-slate-200\/80,
+.dark .border-gray-300,
+.dark .border-gray-200 {
+  border-color: #334155 !important;
+}
+
+/* MDEditor dark mode styling */
+.dark .w-md-editor {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+.dark .w-md-editor-text-input,
+.dark .w-md-editor-text-pre,
+.dark .w-md-editor-preview,
+.dark .w-md-editor-toolbar {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
 @layer utilities {
   .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -20,3 +93,4 @@
     scrollbar-width: none;
   }
 }
+

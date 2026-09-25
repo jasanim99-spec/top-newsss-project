@@ -14,6 +14,7 @@ import { videoService } from '@/services/videoService';
 import { newsAPI } from '@/services/api';
 import { NewsArticle, NewsVideo } from '@/store/newsStore';
 import { useNewsStore } from '@/store/newsStore';
+import { useUITranslator } from '@/utils/i18n';
 
 const sortOptions = [
   { value: 'latest', label: 'Latest' },
@@ -23,6 +24,7 @@ const sortOptions = [
 ];
 
 export default function CategoryPage() {
+  const { t } = useUITranslator();
   const { category } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentLanguage } = useNewsStore();
@@ -144,44 +146,21 @@ export default function CategoryPage() {
               transition={{ duration: 0.6 }}
               className="mb-8"
             >
-              <h1 className="text-4xl font-bold font-serif mb-4">{categoryTitle} News</h1>
-              <p className="text-muted-foreground text-lg">
-                Stay updated with the latest {categoryTitle.toLowerCase()} news and analysis
-              </p>
+              <h1 className="text-4xl font-bold font-serif mb-4">{t(categoryTitle)} - {t('Latest News')}</h1>
             </motion.div>
 
             <div className="flex flex-col lg:flex-row gap-8">
               {/* Main Content */}
               <div className="flex-1">
-                {/* Filters */}
-                <div className="flex items-center justify-between mb-6">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {articles.length} articles
-                  </p>
-                  <Select value={sortBy} onValueChange={handleSortChange}>
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sortOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Articles Grid */}
                 {error ? (
                   <div className="text-center py-12">
-                    <h2 className="text-xl font-semibold mb-2">Unable to load news</h2>
+                    <h2 className="text-xl font-semibold mb-2">{t('No articles found')}</h2>
                     <p className="text-muted-foreground">{error}</p>
                   </div>
                 ) : articles.length === 0 ? (
                   <div className="text-center py-12">
-                    <h2 className="text-xl font-semibold mb-2">No articles found</h2>
-                    <p className="text-muted-foreground">Try changing the filters or check back later.</p>
+                    <h2 className="text-xl font-semibold mb-2">{t('No articles found')}</h2>
                   </div>
                 ) : (
                   <motion.div

@@ -191,9 +191,11 @@ import { Button } from '@/components/ui/button';
 import { newsAPI } from '@/services/api';
 import { useNewsStore } from '@/store/newsStore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUITranslator } from '@/utils/i18n';
 import { Link } from 'react-router-dom';
 
 export function VideoSection() {
+  const { t } = useUITranslator();
   const { currentLanguage, videos, setVideos } = useNewsStore();
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -311,22 +313,19 @@ export function VideoSection() {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    Video News & Shorts
+                    {t('VIDEOS')} & {t('Top Videos')}
                   </h2>
                   <span className="bg-red-500/20 text-red-300 border border-red-500/30 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full animate-pulse">
-                    ▶ LIVE
+                    ▶ {t('Live Updates')}
                   </span>
                 </div>
-                <p className="text-slate-300 text-xs sm:text-sm font-medium mt-0.5">
-                  Watch latest video bulletins, ground reports, and short clips
-                </p>
               </div>
             </motion.div>
             
             <div className="flex items-center space-x-4">
               <Button asChild className="hidden sm:flex bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-md border-0 transition-all active:scale-95">
                 <Link to="/videos">
-                  View All Videos →
+                  {t('MORE')} {t('VIDEOS')} →
                 </Link>
               </Button>
               

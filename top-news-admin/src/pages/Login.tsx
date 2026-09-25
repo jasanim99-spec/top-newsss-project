@@ -74,25 +74,25 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-slate-100">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Top Logo & Title */}
-        <div className="flex justify-center mb-3">
+        <div className="flex justify-center mb-4">
           <img 
             src="/logo.png" 
             alt="TOP NEWS Logo" 
-            className="w-16 h-16 rounded-2xl object-cover shadow-md border border-gray-100"
+            className="w-16 h-16 rounded-2xl object-cover shadow-lg shadow-indigo-500/10 border border-slate-800"
           />
         </div>
         
-        <h2 className="text-center text-3xl font-extrabold text-gray-900 tracking-tight">
+        <h2 className="text-center text-3xl font-black text-white tracking-tight">
           {isResetMode 
             ? 'Reset Password' 
             : portalType === 'reporter' 
             ? 'Reporter Portal Login' 
             : 'Admin Portal Login'}
         </h2>
-        <p className="mt-1.5 text-center text-sm text-gray-500 font-medium">
+        <p className="mt-1.5 text-center text-sm text-slate-400 font-medium">
           {isResetMode 
             ? 'Enter your Security Key to update your password' 
             : portalType === 'reporter'
@@ -105,11 +105,11 @@ export const Login: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white py-8 px-4 shadow-sm sm:rounded-2xl sm:px-10 border border-gray-200/80"
+          className="bg-slate-900/90 py-8 px-4 shadow-2xl sm:rounded-3xl sm:px-10 border border-slate-800/80 backdrop-blur-xl"
         >
           {/* DUAL PORTAL SWITCHER TABS */}
           {!isResetMode && (
-            <div className="flex items-center justify-center p-1.5 bg-gray-100 rounded-2xl mb-6 border border-gray-200">
+            <div className="flex items-center justify-center p-1.5 bg-slate-950 rounded-2xl mb-6 border border-slate-800">
               <button
                 type="button"
                 onClick={() => {
@@ -117,10 +117,10 @@ export const Login: React.FC = () => {
                   if (email === 'reporter@topnews.com') setEmail('jasanim99@gmail.com');
                   setError(null);
                 }}
-                className={`flex-1 py-2.5 px-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-2.5 px-3 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   portalType === 'admin' 
-                    ? 'bg-[#0058be] text-white shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' 
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
                 <ShieldCheck className="w-4 h-4" />
@@ -134,10 +134,10 @@ export const Login: React.FC = () => {
                   if (email === 'jasanim99@gmail.com') setEmail('reporter@topnews.com');
                   setError(null);
                 }}
-                className={`flex-1 py-2.5 px-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-2.5 px-3 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   portalType === 'reporter' 
-                    ? 'bg-emerald-600 text-white shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' 
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
                 <UserCheck className="w-4 h-4" />
@@ -152,9 +152,9 @@ export const Login: React.FC = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mb-5 bg-red-50 border-l-4 border-red-500 p-4 text-red-700 flex items-center space-x-2 rounded-r-lg"
+                className="mb-5 bg-rose-500/10 border-l-4 border-rose-500 p-4 text-rose-300 flex items-center space-x-2 rounded-r-xl"
               >
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <AlertCircle className="w-5 h-5 flex-shrink-0 text-rose-400" />
                 <span className="text-sm font-medium">{error}</span>
               </motion.div>
             )}
@@ -164,9 +164,9 @@ export const Login: React.FC = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mb-5 bg-emerald-50 border-l-4 border-emerald-500 p-4 text-emerald-800 flex items-center space-x-2 rounded-r-lg"
+                className="mb-5 bg-emerald-500/10 border-l-4 border-emerald-500 p-4 text-emerald-300 flex items-center space-x-2 rounded-r-xl"
               >
-                <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600" />
+                <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-400" />
                 <span className="text-sm font-medium">{successMessage}</span>
               </motion.div>
             )}
@@ -176,27 +176,27 @@ export const Login: React.FC = () => {
             /* Login Form */
             <form className="space-y-5" onSubmit={handleLoginSubmit}>
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">
                   {portalType === 'reporter' ? 'Reporter Email Address' : 'Admin Email Address'}
                 </label>
                 <div className="relative rounded-xl shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400" />
+                    <Mail className="h-5 w-5 text-slate-500" />
                   </div>
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be] text-sm font-medium"
+                    className="block w-full pl-11 pr-4 py-2.5 border border-slate-700/80 rounded-xl leading-5 bg-slate-950 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 text-sm font-medium"
                     placeholder={portalType === 'reporter' ? 'reporter@topnews.com' : 'jasanim99@gmail.com'}
                   />
                 </div>
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-extrabold text-slate-300 uppercase tracking-wider">
                     Password
                   </label>
                   <button
@@ -207,21 +207,21 @@ export const Login: React.FC = () => {
                       setError(null);
                       setSuccessMessage(null);
                     }}
-                    className="text-xs font-semibold text-[#0058be] hover:underline"
+                    className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
                   >
                     Forgot Password?
                   </button>
                 </div>
                 <div className="relative rounded-xl shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
+                    <Lock className="h-5 w-5 text-slate-500" />
                   </div>
                   <input
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be] text-sm"
+                    className="block w-full pl-11 pr-4 py-2.5 border border-slate-700/80 rounded-xl leading-5 bg-slate-950 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 text-sm"
                     placeholder="••••••••"
                   />
                 </div>
@@ -231,10 +231,10 @@ export const Login: React.FC = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white disabled:opacity-50 transition-all active:scale-[0.99] ${
+                  className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-extrabold text-white disabled:opacity-50 transition-all active:scale-[0.99] cursor-pointer ${
                     portalType === 'reporter' 
-                      ? 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500' 
-                      : 'bg-[#0058be] hover:bg-[#004395] focus:ring-[#0058be]'
+                      ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/25' 
+                      : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/25'
                   }`}
                 >
                   {submitting 
@@ -249,50 +249,50 @@ export const Login: React.FC = () => {
             /* Secure Admin/Reporter Password Reset Form */
             <form className="space-y-4" onSubmit={handleKeyPasswordReset}>
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">
                   Account Email Address
                 </label>
                 <div className="relative rounded-xl shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400" />
+                    <Mail className="h-5 w-5 text-slate-500" />
                   </div>
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be] text-sm"
+                    className="block w-full pl-11 pr-4 py-2.5 border border-slate-700/80 rounded-xl leading-5 bg-slate-950 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 text-sm"
                     placeholder="Enter your email"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">
                   Master Security Key
                 </label>
                 <div className="relative rounded-xl shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <ShieldCheck className="h-5 w-5 text-gray-400" />
+                    <ShieldCheck className="h-5 w-5 text-slate-500" />
                   </div>
                   <input
                     type="password"
                     required
                     value={masterKey}
                     onChange={(e) => setMasterKey(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be] text-sm font-mono"
+                    className="block w-full pl-11 pr-4 py-2.5 border border-slate-700/80 rounded-xl leading-5 bg-slate-950 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 text-sm font-mono"
                     placeholder="TOPNEWS2026"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">
                   New Password
                 </label>
                 <div className="relative rounded-xl shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
+                    <Lock className="h-5 w-5 text-slate-500" />
                   </div>
                   <input
                     type="password"
@@ -300,7 +300,7 @@ export const Login: React.FC = () => {
                     minLength={6}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be] text-sm"
+                    className="block w-full pl-11 pr-4 py-2.5 border border-slate-700/80 rounded-xl leading-5 bg-slate-950 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 text-sm"
                     placeholder="Enter your new password"
                   />
                 </div>
@@ -309,7 +309,7 @@ export const Login: React.FC = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-[#0058be] hover:bg-[#004395] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0058be] disabled:opacity-50 transition-all active:scale-[0.99]"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-extrabold text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none disabled:opacity-50 transition-all active:scale-[0.99] cursor-pointer"
               >
                 <KeyRound className="w-4 h-4" />
                 {submitting ? 'Updating Password...' : 'Update Password & Sign In'}
@@ -323,7 +323,7 @@ export const Login: React.FC = () => {
                     setError(null);
                     setSuccessMessage(null);
                   }}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-gray-900 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back to Sign In

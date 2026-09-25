@@ -251,24 +251,24 @@ export const TeamManagement: React.FC = () => {
                 </div>
 
                 {/* DETAILS LIST */}
-                <div className="space-y-2.5 text-xs text-slate-600 bg-slate-50/80 p-4 rounded-2xl border border-slate-100 font-medium">
+                <div className="space-y-2.5 text-xs text-slate-300 dark:text-slate-300 bg-slate-900/90 dark:bg-slate-900/90 p-4 rounded-2xl border border-slate-700/60 font-medium shadow-inner">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400 flex items-center gap-1.5">
+                    <span className="text-slate-400 dark:text-slate-400 flex items-center gap-1.5">
                       <ShieldCheck className="w-4 h-4 text-amber-500" /> Beat:
                     </span>
-                    <span className="font-bold text-slate-800">{member.beat || 'General'}</span>
+                    <span className="font-extrabold text-white dark:text-white">{member.beat || 'General'}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400 flex items-center gap-1.5">
+                    <span className="text-slate-400 dark:text-slate-400 flex items-center gap-1.5">
                       <MapPin className="w-4 h-4 text-rose-500" /> City:
                     </span>
-                    <span className="font-semibold text-slate-800">{member.city || 'Gujarat'}</span>
+                    <span className="font-extrabold text-white dark:text-white">{member.city || 'Gujarat'}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400 flex items-center gap-1.5">
+                    <span className="text-slate-400 dark:text-slate-400 flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-indigo-500" /> Press ID:
                     </span>
-                    <span className="bg-slate-900 text-white font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md shadow-xs">
+                    <span className="bg-slate-950 text-indigo-300 font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md border border-indigo-500/30 shadow-xs">
                       {member.pressCardNo || `PRESS-${member.uid?.slice(0, 6).toUpperCase()}`}
                     </span>
                   </div>

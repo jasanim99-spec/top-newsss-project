@@ -63,6 +63,8 @@ const mapDocToNewsArticle = (docSnap: QueryDocumentSnapshot<DocumentData> | Docu
   };
 };
 
+import { translateArticles, translateArticle } from './translationService';
+
 export const newsService = {
   /**
    * Fetch published news with optional filtering & pagination from PostgreSQL REST API
@@ -82,86 +84,95 @@ export const newsService = {
     queryParams.append('limit', pageSize.toString());
     if (options.category) queryParams.append('category', options.category);
     if (options.topic) queryParams.append('topic', options.topic);
-    if (options.language) queryParams.append('language', options.language);
     if (options.section) queryParams.append('section', options.section);
+
+    let rawArticles: NewsArticle[] = [];
+    let total = 0;
 
     try {
       const res = await fetch(`${API_BASE_URL}/news?${queryParams.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        return {
-          total: data.total || 0,
-          page: data.page || 1,
-          limit: data.limit || pageSize,
-          articles: data.articles || []
-        };
+        rawArticles = data.articles || [];
+        total = data.total || rawArticles.length;
       }
     } catch (err) {
       console.warn('PostgreSQL API news fetch notice, falling back to Firestore:', err);
     }
 
-    // Fallback to Firestore
-    try {
-      const newsColRef = collection(db, NEWS_COLLECTION);
-      const querySnapshot = await getDocs(newsColRef);
-      let articles = querySnapshot.docs
-        .map(docSnap => mapDocToNewsArticle(docSnap, docSnap.id))
-        .filter(a => (a.status || 'published') === 'published');
+    if (rawArticles.length === 0) {
+      try {
+        const newsColRef = collection(db, NEWS_COLLECTION);
+        const querySnapshot = await getDocs(newsColRef);
+        let articles = querySnapshot.docs
+          .map(docSnap => mapDocToNewsArticle(docSnap, docSnap.id))
+          .filter(a => (a.status || 'published') === 'published');
 
-      if (options.category && options.category !== 'all') {
-        articles = articles.filter(a => (a.category || '').toLowerCase() === options.category!.toLowerCase());
-      }
-      if (options.topic) {
-        articles = articles.filter(a => (a.topic || '').toLowerCase() === options.topic!.toLowerCase());
-      }
-      if (options.language) {
-        articles = articles.filter(a => isLanguageMatch(a.language || 'en', options.language));
-      }
+        if (options.category && options.category !== 'all') {
+          articles = articles.filter(a => (a.category || '').toLowerCase() === options.category!.toLowerCase());
+        }
+        if (options.topic) {
+          articles = articles.filter(a => (a.topic || '').toLowerCase() === options.topic!.toLowerCase());
+        }
 
-      articles.sort((a, b) => parseDateToMillis(b.publishedAt) - parseDateToMillis(a.publishedAt));
-
-      return {
-        total: articles.length,
-        page: 1,
-        limit: pageSize,
-        articles: articles.slice(0, pageSize)
-      };
-    } catch (e) {
-      return { total: 0, page: 1, limit: pageSize, articles: mockArticles.slice(0, pageSize) };
+        articles.sort((a, b) => parseDateToMillis(b.publishedAt) - parseDateToMillis(a.publishedAt));
+        rawArticles = articles.slice(0, pageSize);
+        total = articles.length;
+      } catch (e) {
+        rawArticles = mockArticles.slice(0, pageSize);
+        total = mockArticles.length;
+      }
     }
+
+    const targetLang = options.language || 'en';
+    const finalArticles = targetLang !== 'en' ? await translateArticles(rawArticles, targetLang) : rawArticles;
+
+    return {
+      total,
+      page: 1,
+      limit: pageSize,
+      articles: finalArticles
+    };
   },
 
   /**
    * Fetch article by ID or Slug from PostgreSQL REST API
    */
-  async getNewsById(id: string): Promise<NewsArticle | null> {
+  async getNewsById(id: string, language?: string): Promise<NewsArticle | null> {
     if (!id) return null;
+    let article: NewsArticle | null = null;
 
     try {
       const res = await fetch(`${API_BASE_URL}/news/${encodeURIComponent(id)}`);
       if (res.ok) {
-        return await res.json();
+        article = await res.json();
       }
     } catch (err) {
       console.warn('PostgreSQL API getNewsById notice:', err);
     }
 
-    try {
-      const docRef = doc(db, NEWS_COLLECTION, id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        return mapDocToNewsArticle(docSnap, docSnap.id);
-      }
-    } catch (e) { }
+    if (!article) {
+      try {
+        const docRef = doc(db, NEWS_COLLECTION, id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          article = mapDocToNewsArticle(docSnap, docSnap.id);
+        }
+      } catch (e) { }
+    }
 
-    return null;
+    if (article && language && language !== 'en') {
+      return await translateArticle(article, language);
+    }
+
+    return article;
   },
 
   /**
    * Fetch article by slug from PostgreSQL REST API
    */
-  async getNewsBySlug(slug: string): Promise<NewsArticle | null> {
-    return this.getNewsById(slug);
+  async getNewsBySlug(slug: string, language?: string): Promise<NewsArticle | null> {
+    return this.getNewsById(slug, language);
   },
 
   async getNewsByCategory(category: string, language?: string, limitNum = 12): Promise<NewsResponse> {

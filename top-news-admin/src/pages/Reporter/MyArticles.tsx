@@ -191,6 +191,13 @@ export const MyArticles: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2 self-end md:self-center flex-shrink-0">
+                  <button
+                    onClick={() => navigate(`/reporter/news/${art.id || art._id}/edit`)}
+                    className="bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs px-4 py-2.5 rounded-xl border border-purple-200/80 transition-all flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer"
+                  >
+                    <Edit className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Edit</span>
+                  </button>
                   <a
                     href={`http://localhost:8080/article/${art.id || art._id}`}
                     target="_blank"

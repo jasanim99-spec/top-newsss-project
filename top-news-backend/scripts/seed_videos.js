@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const { Pool } = pg;
-const connectionString = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || 'postgresql://neondb_owner:npg_u38NawxLgSRt@ep-dry-cherry-a8316m98-pooler.eastus2.azure.neon.tech/neondb?sslmode=require';
+const connectionString = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_Zch7yLNazH2C@ep-plain-thunder-b38559px-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
 
 const pool = new Pool({ connectionString, ssl: { rejectUnauthorized: false } });
 
@@ -53,25 +53,58 @@ const sampleVideos = [
   }
 ];
 
-async function seed() {
-  console.log('Updating sample short video URLs in Neon DB...');
-  for (const v of sampleVideos) {
-    const id = crypto.randomUUID();
-    await pool.query(
-      `INSERT INTO short_videos (id, title, slug, description, video_url, thumbnail_url, duration, category, topic, language, section, views, status, published_at, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW(), NOW())
-       ON CONFLICT (slug) DO UPDATE SET
-         video_url = EXCLUDED.video_url,
-         thumbnail_url = EXCLUDED.thumbnail_url,
-         updated_at = NOW();`,
-      [id, v.title, v.slug, v.description, v.video_url, v.thumbnail_url, v.duration, v.category, v.topic, v.language, v.section, v.views, v.status]
-    );
+async function seedPool(poolInstance, name) {
+  try {
+    console.log(`Updating short videos in ${name}...`);
+    for (const v of sampleVideos) {
+      const id = crypto.randomUUID();
+      await poolInstance.query(
+        `INSERT INTO short_videos (id, title, slug, description, video_url, thumbnail_url, duration, category, topic, language, section, views, status, published_at, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW(), NOW())
+         ON CONFLICT (slug) DO UPDATE SET
+           title = EXCLUDED.title,
+           description = EXCLUDED.description,
+           video_url = EXCLUDED.video_url,
+           thumbnail_url = EXCLUDED.thumbnail_url,
+           duration = EXCLUDED.duration,
+           category = EXCLUDED.category,
+           topic = EXCLUDED.topic,
+           language = EXCLUDED.language,
+           status = EXCLUDED.status,
+           updated_at = NOW();`,
+        [id, v.title, v.slug, v.description, v.video_url, v.thumbnail_url, v.duration, v.category, v.topic, v.language, v.section, v.views, v.status]
+      );
+    }
+    console.log(`✅ Success for ${name}`);
+    await poolInstance.end();
+  } catch (e) {
+    console.error(`❌ Error seeding ${name}:`, e.message);
   }
-  console.log('✅ High-speed video URLs updated successfully in Neon DB!');
-  await pool.end();
 }
 
-seed().catch(err => {
+async function seedAll() {
+  // 1. Local DB
+  const localPool = new Pool({
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres1234',
+    database: process.env.DB_NAME || 'top_news'
+  });
+  await seedPool(localPool, 'Local PostgreSQL (localhost)');
+
+  // 2. Primary Neon DB
+  const neonUrl1 = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_u38NawxLgSRt@ep-dry-cherry-a8316m98-pooler.eastus2.azure.neon.tech/neondb?sslmode=require';
+  const neonPool1 = new Pool({ connectionString: neonUrl1, ssl: { rejectUnauthorized: false } });
+  await seedPool(neonPool1, 'Neon Cloud DB (dry-cherry)');
+
+  // 3. Alternate Neon DB
+  const neonUrl2 = 'postgresql://neondb_owner:npg_Zch7yLNazH2C@ep-plain-thunder-b38559px-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
+  const neonPool2 = new Pool({ connectionString: neonUrl2, ssl: { rejectUnauthorized: false } });
+  await seedPool(neonPool2, 'Neon Cloud DB (plain-thunder)');
+}
+
+seedAll().catch(err => {
   console.error('Seed error:', err);
   process.exit(1);
 });

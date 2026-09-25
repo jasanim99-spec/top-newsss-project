@@ -15,8 +15,10 @@ import { newsService } from '@/services/newsService';
 import { videoService } from '@/services/videoService';
 import { NewsArticle, NewsVideo } from '@/store/newsStore';
 import { useNewsStore } from '@/store/newsStore';
+import { useUITranslator } from '@/utils/i18n';
 
 export default function SearchPage() {
+  const { t } = useUITranslator();
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentLanguage } = useNewsStore();
   const query = searchParams.get('q') || '';
@@ -103,7 +105,7 @@ export default function SearchPage() {
               transition={{ duration: 0.6 }}
               className="mb-8"
             >
-              <h1 className="text-4xl font-bold font-serif mb-6">Search News</h1>
+              <h1 className="text-4xl font-bold font-serif mb-6">{t('Search Results')}</h1>
               
               {/* Search Form */}
               <form onSubmit={handleSearch} className="mb-6">
@@ -111,28 +113,16 @@ export default function SearchPage() {
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
                     type="search"
-                    placeholder="Search for news, articles, videos..."
+                    placeholder={t('Search news...')}
                     className="pl-12 h-12 text-lg"
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
                   />
                   <Button type="submit" className="absolute right-2 top-2">
-                    Search
+                    {t('Search')}
                   </Button>
                 </div>
               </form>
-
-              {query && (
-                <div className="text-muted-foreground">
-                  {loading ? (
-                    <p>Searching for "{query}"...</p>
-                  ) : (
-                    <p>
-                      Found {totalResults} result{totalResults !== 1 ? 's' : ''} for "{query}"
-                    </p>
-                  )}
-                </div>
-              )}
             </motion.div>
 
             <div className="flex flex-col lg:flex-row gap-8">

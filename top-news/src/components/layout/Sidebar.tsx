@@ -11,8 +11,10 @@ import { useNewsStore } from '@/store/newsStore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePushNotification } from '@/hooks/usePushNotification';
 import { AdSubmissionModal } from '@/components/ads/AdSubmissionModal';
+import { useUITranslator } from '@/utils/i18n';
 
 export function Sidebar() {
+  const { t } = useUITranslator();
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const { currentLanguage, trendingArticles, setTrendingArticles } = useNewsStore();
 
@@ -65,7 +67,7 @@ export function Sidebar() {
       >
         <div className="flex items-center space-x-2 mb-4">
           <TrendingUp className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Trending Now</h3>
+          <h3 className="text-lg font-semibold">{t('Trending News')}</h3>
         </div>
         
         {isLoading ? (

@@ -15,6 +15,7 @@ import FileUpload from '@/components/Common/FileUpload';
 import LoadingSpinner from '@/components/Common/LoadingSpinner';
 import VoiceDictationButton from '@/components/Reporter/VoiceDictationButton';
 import LocationPicker from '@/components/Reporter/LocationPicker';
+import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 
 const validationSchema = Yup.object({
@@ -25,18 +26,19 @@ const validationSchema = Yup.object({
   imageUrl: Yup.string().required('Cover image is required'),
   category: Yup.string().required('Category is required'),
   topic: Yup.string(),
-  language: Yup.string().required('Language is required'),
   section: Yup.string().required('Section is required'),
   status: Yup.string().oneOf(['draft', 'pending', 'published', 'rejected']).required('Status is required'),
   publishedAt: Yup.string().required('Published date is required'),
   sourceUrl: Yup.string(),
 });
 
-const NewsForm: React.FC = () => {
+export const NewsForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
   const queryClient = useQueryClient();
+  const { user, admin } = useAuth();
+  const isReporterRoute = window.location.pathname.startsWith('/reporter');
   const [tempId] = useState(() => id || `news_${Date.now()}`);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
@@ -87,9 +89,15 @@ const NewsForm: React.FC = () => {
       queryClient.resetQueries({ queryKey: ['news'] });
       queryClient.invalidateQueries({ queryKey: ['news'] });
       queryClient.invalidateQueries({ queryKey: ['news-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['reporter-articles'] });
+      queryClient.invalidateQueries({ queryKey: ['reporter-stats'] });
       queryClient.refetchQueries({ queryKey: ['news'] });
       toast.success(isEditing ? 'News updated successfully' : 'News created successfully');
-      navigate('/news');
+      if (isReporterRoute) {
+        navigate('/reporter/articles');
+      } else {
+        navigate('/news');
+      }
     },
     onError: (err: any) => {
       console.error('Mutation error:', err);
@@ -109,6 +117,10 @@ const NewsForm: React.FC = () => {
   };
 
   const initialValues: NewsArticle = React.useMemo(() => {
+    const defaultAuthorName = admin?.name || user?.displayName || user?.email?.split('@')[0] || (isReporterRoute ? 'Journalist' : 'Admin Desk');
+    const defaultAuthorRole = admin?.role || (isReporterRoute ? 'reporter' : 'admin');
+    const defaultAuthorId = admin?.uid || admin?.id || user?.uid || user?.email || '';
+
     if (existingNews) {
       return {
         ...existingNews,
@@ -123,17 +135,17 @@ const NewsForm: React.FC = () => {
         section: existingNews.section || 'main',
         keywords: Array.isArray(existingNews.keywords) ? existingNews.keywords : [],
         tags: Array.isArray(existingNews.tags) ? existingNews.tags : [],
-        status: existingNews.status || 'published',
+        status: existingNews.status || (isReporterRoute ? 'pending' : 'published'),
         publishedAt: formatDateTimeLocal(existingNews.publishedAt),
         sourceUrl: existingNews.sourceUrl || '',
         isBreaking: !!existingNews.isBreaking,
         aiSummary: (existingNews as any).aiSummary || '',
-        authorName: (existingNews as any).authorName || 'Admin Desk',
-        authorRole: (existingNews as any).authorRole || 'admin',
-        authorId: (existingNews as any).authorId || '',
-        authorEmail: (existingNews as any).authorEmail || '',
-        pressCardNo: (existingNews as any).pressCardNo || '',
-        authorCity: (existingNews as any).authorCity || '',
+        authorName: (existingNews as any).authorName || defaultAuthorName,
+        authorRole: (existingNews as any).authorRole || defaultAuthorRole,
+        authorId: (existingNews as any).authorId || defaultAuthorId,
+        authorEmail: (existingNews as any).authorEmail || admin?.email || user?.email || '',
+        pressCardNo: (existingNews as any).pressCardNo || admin?.pressCardNo || '',
+        authorCity: (existingNews as any).authorCity || admin?.city || '',
         location: (existingNews as any).location || undefined,
       };
     }
@@ -145,19 +157,22 @@ const NewsForm: React.FC = () => {
       imageUrl: '',
       category: 'general',
       topic: 'general',
-      language: 'en',
+      language: 'gu',
       section: 'main',
       keywords: [],
       tags: [],
-      status: 'published',
+      status: isReporterRoute ? 'pending' : 'published',
       publishedAt: new Date().toISOString().slice(0, 16),
       sourceUrl: '',
       isBreaking: false,
       aiSummary: '',
-      authorName: 'Admin Desk',
-      authorRole: 'admin'
+      authorName: defaultAuthorName,
+      authorRole: defaultAuthorRole,
+      authorId: defaultAuthorId,
+      authorCity: admin?.city || '',
+      pressCardNo: admin?.pressCardNo || '',
     };
-  }, [existingNews]);
+  }, [existingNews, admin, user, isReporterRoute]);
 
   if (isEditing && isLoadingNews) {
     return <LoadingSpinner />;
@@ -170,7 +185,7 @@ const NewsForm: React.FC = () => {
         <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex items-center gap-4">
           <button
-            onClick={() => navigate('/news')}
+            onClick={() => navigate(isReporterRoute ? '/reporter/articles' : '/news')}
             className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all backdrop-blur-sm border border-white/15 cursor-pointer active:scale-95"
             title="Go back to articles list"
           >
@@ -189,7 +204,7 @@ const NewsForm: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-200/80 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-3xl shadow-xl border border-slate-200/80 dark:border-slate-800 relative overflow-hidden transition-colors">
         <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 absolute top-0 left-0" />
         <Formik
           initialValues={initialValues}
@@ -222,14 +237,14 @@ const NewsForm: React.FC = () => {
           {({ values, setFieldValue, isSubmitting, handleChange }) => (
             <Form className="space-y-6">
               {/* AI ASSISTANT TOOLBAR */}
-              <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 p-4 rounded-2xl border border-purple-200 flex flex-wrap items-center justify-between gap-3">
+              <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 dark:from-purple-950/40 dark:via-indigo-950/40 dark:to-slate-900 p-4 rounded-2xl border border-purple-200 dark:border-purple-800/40 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-md">
                     AI
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-purple-950 uppercase tracking-wider">AI Smart Editor Tools</h4>
-                    <p className="text-[11px] text-purple-700">Auto-summary, SEO Tags, and Auto-translation</p>
+                    <h4 className="text-xs font-black text-purple-950 dark:text-purple-200 uppercase tracking-wider">AI Smart Editor Tools</h4>
+                    <p className="text-[11px] text-purple-700 dark:text-purple-300">Auto-summary, SEO Tags, and Auto-translation</p>
                   </div>
                 </div>
 
@@ -299,7 +314,7 @@ const NewsForm: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
                       Title *
                     </label>
                   </div>
@@ -312,19 +327,19 @@ const NewsForm: React.FC = () => {
                         setFieldValue('slug', generateSlug(e.target.value));
                       }
                     }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   />
                   <ErrorMessage name="title" component="div" className="text-red-600 text-sm mt-1" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Slug * (Auto-generated or custom)
                   </label>
                   <Field
                     name="slug"
                     type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 font-mono text-sm"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-slate-100 font-mono text-sm"
                   />
                   <ErrorMessage name="slug" component="div" className="text-red-600 text-sm mt-1" />
                 </div>
@@ -332,13 +347,13 @@ const NewsForm: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Topic *
                   </label>
                   <Field
                     name="topic"
                     type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   />
                   <ErrorMessage name="topic" component="div" className="text-red-600 text-sm mt-1" />
                 </div>
@@ -388,10 +403,21 @@ const NewsForm: React.FC = () => {
                   <Field
                     as="select"
                     name="status"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm font-semibold"
                   >
-                    <option value="published">Published (Live)</option>
-                    <option value="draft">Draft (Hidden from public site)</option>
+                    {isReporterRoute ? (
+                      <>
+                        <option value="pending">🟡 Submit for Editorial Review (Pending)</option>
+                        <option value="draft">⚪ Save as Draft (Hidden)</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="published">🟢 Published (Live)</option>
+                        <option value="pending">🟡 Pending Review</option>
+                        <option value="draft">⚪ Draft (Hidden)</option>
+                        <option value="rejected">🔴 Revision Needed</option>
+                      </>
+                    )}
                   </Field>
                   <ErrorMessage name="status" component="div" className="text-red-600 text-sm mt-1" />
                 </div>
@@ -439,25 +465,7 @@ const NewsForm: React.FC = () => {
                 <ErrorMessage name="imageUrl" component="div" className="text-red-600 text-sm mt-1" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Language *
-                  </label>
-                  <Field
-                    as="select"
-                    name="language"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    {LANGUAGE_OPTIONS.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.name}
-                      </option>
-                    ))}
-                  </Field>
-                  <ErrorMessage name="language" component="div" className="text-red-600 text-sm mt-1" />
-                </div>
-
+              <div className="grid grid-cols-1 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category *
@@ -530,7 +538,7 @@ const NewsForm: React.FC = () => {
               </div>
 
               {/* BREAKING NEWS & LOCATION */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50 rounded-xl border border-gray-200">
+              <div className={`grid grid-cols-1 ${isReporterRoute ? '' : 'md:grid-cols-2'} gap-6 p-4 bg-slate-50 rounded-xl border border-gray-200`}>
                 <div className="space-y-3">
                   <label className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
                     <Zap className="w-4 h-4 text-red-600" />
@@ -546,36 +554,40 @@ const NewsForm: React.FC = () => {
                     <span>Highlight as 🔴 BREAKING NEWS (Top Red Banner)</span>
                   </label>
 
-                    <label className="flex items-center gap-2 text-xs font-bold text-blue-700 cursor-pointer mt-2">
-                      <input
-                        type="checkbox"
-                        checked={values.sendPush || false}
-                        onChange={(e) => setFieldValue('sendPush', e.target.checked)}
-                        className="w-4 h-4 text-blue-600 rounded accent-blue-600"
-                      />
-                      <span className="flex items-center gap-1">🔔 Send Push Notification Alert to Subscribers</span>
-                    </label>
+                  {!isReporterRoute && (
+                    <>
+                      <label className="flex items-center gap-2 text-xs font-bold text-blue-700 cursor-pointer mt-2">
+                        <input
+                          type="checkbox"
+                          checked={values.sendPush || false}
+                          onChange={(e) => setFieldValue('sendPush', e.target.checked)}
+                          className="w-4 h-4 text-blue-600 rounded accent-blue-600"
+                        />
+                        <span className="flex items-center gap-1">🔔 Send Push Notification Alert to Subscribers</span>
+                      </label>
 
-                    {/* Section Checkboxes — radio-like behaviour */}
-                  <label className="flex items-center gap-2 text-xs font-bold text-amber-700 cursor-pointer mt-2">
-                    <input
-                      type="checkbox"
-                      checked={values.section === 'featured'}
-                      onChange={(e) => setFieldValue('section', e.target.checked ? 'featured' : 'main')}
-                      className="w-4 h-4 rounded accent-amber-500"
-                    />
-                    <span>⭐ Featured Stories (Homepage Hero + Carousel)</span>
-                  </label>
+                      {/* Section Checkboxes — radio-like behaviour */}
+                      <label className="flex items-center gap-2 text-xs font-bold text-amber-700 cursor-pointer mt-2">
+                        <input
+                          type="checkbox"
+                          checked={values.section === 'featured'}
+                          onChange={(e) => setFieldValue('section', e.target.checked ? 'featured' : 'main')}
+                          className="w-4 h-4 rounded accent-amber-500"
+                        />
+                        <span>⭐ Featured Stories (Homepage Hero + Carousel)</span>
+                      </label>
 
-                  <label className="flex items-center gap-2 text-xs font-bold text-teal-700 cursor-pointer mt-1">
-                    <input
-                      type="checkbox"
-                      checked={values.section === 'sidebar'}
-                      onChange={(e) => setFieldValue('section', e.target.checked ? 'sidebar' : 'main')}
-                      className="w-4 h-4 rounded accent-teal-500"
-                    />
-                    <span>📋 Sidebar / Trending Now (Right Panel)</span>
-                  </label>
+                      <label className="flex items-center gap-2 text-xs font-bold text-teal-700 cursor-pointer mt-1">
+                        <input
+                          type="checkbox"
+                          checked={values.section === 'sidebar'}
+                          onChange={(e) => setFieldValue('section', e.target.checked ? 'sidebar' : 'main')}
+                          className="w-4 h-4 rounded accent-teal-500"
+                        />
+                        <span>📋 Sidebar / Trending Now (Right Panel)</span>
+                      </label>
+                    </>
+                  )}
 
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">Author / Journalist Byline</label>
@@ -588,12 +600,14 @@ const NewsForm: React.FC = () => {
                   </div>
                 </div>
 
-                <div>
-                  <LocationPicker
-                    value={values.location}
-                    onChange={(loc) => setLocationDataAndField(loc, setFieldValue)}
-                  />
-                </div>
+                {!isReporterRoute && (
+                  <div>
+                    <LocationPicker
+                      value={values.location}
+                      onChange={(loc) => setLocationDataAndField(loc, setFieldValue)}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* AI Summary Editor */}
@@ -613,7 +627,7 @@ const NewsForm: React.FC = () => {
               <div className="flex justify-end space-x-4 pt-6 border-t">
                 <button
                   type="button"
-                  onClick={() => navigate('/news')}
+                  onClick={() => navigate(isReporterRoute ? '/reporter/articles' : '/news')}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel

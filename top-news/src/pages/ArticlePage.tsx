@@ -13,11 +13,13 @@ import { newsService } from "@/services/newsService"
 import { mockArticles } from "@/data/mockNews"
 import { safeFormatDistanceToNow } from "@/utils/converters"
 import ReactMarkdown from "react-markdown"
+import { useNewsStore } from "@/store/newsStore"
 
 export default function ArticlePage() {
   const params = useParams()
   const slug = params.slug || params.id || Object.values(params).filter(Boolean).pop()
   const navigate = useNavigate()
+  const { currentLanguage } = useNewsStore()
   const [article, setArticle] = useState<NewsArticle | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,7 +37,7 @@ export default function ArticlePage() {
 
       try {
         setLoading(true)
-        const articleData = await newsService.getNewsBySlug(slug)
+        const articleData = await newsService.getNewsBySlug(slug, currentLanguage)
         if (articleData && (articleData.status === "published" || !articleData.status)) {
           setArticle(articleData)
           // Increment view count safely once per article ID
@@ -66,7 +68,7 @@ export default function ArticlePage() {
     }
 
     fetchArticle()
-  }, [slug])
+  }, [slug, currentLanguage])
 
   if (loading) {
     return (

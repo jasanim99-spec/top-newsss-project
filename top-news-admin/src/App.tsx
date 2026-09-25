@@ -58,6 +58,7 @@ function App() {
                   <Route index element={<ReporterDashboard />} />
                   <Route path="dashboard" element={<ReporterDashboard />} />
                   <Route path="submit" element={<SubmitNews />} />
+                  <Route path="news/:id/edit" element={<NewsForm />} />
                   <Route path="articles" element={<MyArticles />} />
                   <Route path="goals" element={<ReporterGoals />} />
                   <Route path="press-card" element={<PressCardPage />} />
@@ -87,6 +88,7 @@ function App() {
 
                   {/* Team & Journalists Route */}
                   <Route path="team" element={<TeamManagement />} />
+                  <Route path="reporters" element={<TeamManagement />} />
 
                   {/* Settings Route */}
                   <Route path="settings" element={<Settings />} />

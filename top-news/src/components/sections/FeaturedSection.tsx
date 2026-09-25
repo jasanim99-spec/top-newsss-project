@@ -8,8 +8,10 @@ import { newsService } from '@/services/newsService';
 import { useNewsStore } from '@/store/newsStore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useRef } from 'react';
+import { useUITranslator } from '@/utils/i18n';
 
 export function FeaturedSection() {
+  const { t } = useUITranslator();
   const { currentLanguage, featuredArticles, setFeaturedArticles } = useNewsStore();
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -112,7 +114,7 @@ export function FeaturedSection() {
             viewport={{ once: true }}
             className="text-2xl lg:text-3xl font-bold font-serif text-foreground"
           >
-            Featured Stories
+            {t('Featured Stories')}
           </motion.h2>
           
           <div className="flex space-x-2">

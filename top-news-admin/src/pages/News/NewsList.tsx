@@ -163,7 +163,7 @@ const NewsList: React.FC = () => {
               >
                 {isHero && (
                   <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 via-orange-500 to-amber-600 text-white text-[10px] font-black px-4 py-1 rounded-bl-xl uppercase tracking-wider shadow-sm flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-white" /> {getLanguageName(article.language).toUpperCase()} HERO
+                    <Star className="w-3 h-3 fill-white" /> HERO STORY
                   </div>
                 )}
 
@@ -184,12 +184,9 @@ const NewsList: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       {isHero && (
                         <span className="px-3 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs rounded-full font-black tracking-wide flex items-center gap-1 shadow-sm">
-                          <Star className="w-3.5 h-3.5 fill-white" /> ⭐ {getLanguageName(article.language).toUpperCase()} HERO
+                          <Star className="w-3.5 h-3.5 fill-white" /> ⭐ HERO STORY
                         </span>
                       )}
-                      <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200/60 text-xs rounded-full font-medium">
-                        {getLanguageName(article.language)}
-                      </span>
                       <span className="px-2.5 py-0.5 bg-purple-50 text-purple-700 border border-purple-200/60 text-xs rounded-full font-medium">
                         {article.category}
                       </span>

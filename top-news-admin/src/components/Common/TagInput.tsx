@@ -41,19 +41,19 @@ const TagInput: React.FC<TagInputProps> = ({ tags = [], onChange, placeholder = 
 
   return (
     <div className="space-y-1.5">
-      <div className="border border-gray-300 rounded-lg p-2.5 bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all">
+      <div className="border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 bg-white dark:bg-slate-800 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all">
         {tags && tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-2">
             {tags.map((tag, index) => (
               <span
                 key={index}
-                className="inline-flex items-center px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-medium rounded-md shadow-sm"
+                className="inline-flex items-center px-2.5 py-1 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 text-xs font-medium rounded-md shadow-sm"
               >
                 {tag}
                 <button
                   type="button"
                   onClick={() => removeTag(tag)}
-                  className="ml-1.5 text-blue-500 hover:text-blue-800 transition-colors"
+                  className="ml-1.5 text-blue-500 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -68,7 +68,7 @@ const TagInput: React.FC<TagInputProps> = ({ tags = [], onChange, placeholder = 
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="flex-1 outline-none text-sm bg-transparent placeholder-gray-400"
+            className="flex-1 outline-none text-sm bg-transparent text-slate-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400"
           />
           <button
             type="button"
@@ -81,7 +81,7 @@ const TagInput: React.FC<TagInputProps> = ({ tags = [], onChange, placeholder = 
           </button>
         </div>
       </div>
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-400 dark:text-slate-400">
         Type word and press Enter, comma (,), or click '+ Add'
       </p>
     </div>

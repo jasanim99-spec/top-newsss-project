@@ -42,7 +42,10 @@ const categories = [
   }
 ];
 
+import { useUITranslator } from '@/utils/i18n';
+
 export function CategoryGrid() {
+  const { t } = useUITranslator();
   const { currentLanguage, categoryArticles, setCategoryArticles } = useNewsStore();
 
   // Fetch articles for each category
@@ -162,18 +165,15 @@ export function CategoryGrid() {
                 <div className="border-b border-border pb-4">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-xl font-bold font-serif text-foreground capitalize">
-                      {category.name}
+                      {t(category.name)}
                     </h2>
                     <Button variant="ghost" size="sm" asChild>
                       <Link to={`/category/${category.key}`} className="flex items-center space-x-1 text-primary hover:text-primary-hover">
-                        <span className="text-sm">View All</span>
+                        <span className="text-sm">{t('MORE')}</span>
                         <ArrowRight className="h-3 w-3" />
                       </Link>
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {category.description}
-                  </p>
                 </div>
 
                 {/* Main Article */}
@@ -226,7 +226,7 @@ export function CategoryGrid() {
                       asChild
                     >
                       <Link to={`/category/${category.key}`}>
-                        More {category.name} News
+                        {t('More News')} ({t(category.name)})
                       </Link>
                     </Button>
                   </motion.div>
