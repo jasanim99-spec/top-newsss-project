@@ -192,8 +192,8 @@ export default function CategoryPage() {
                   >
                     <div className="flex items-center justify-between mb-6">
                       <div>
-                        <h2 className="text-2xl font-bold font-serif">{categoryTitle} Short Videos</h2>
-                        <p className="text-muted-foreground text-sm">Watch latest short video highlights for {categoryTitle.toLowerCase()}</p>
+                        <h2 className="text-2xl font-bold font-serif">{categoryTitle} Videos</h2>
+                        <p className="text-muted-foreground text-sm">Watch latest video highlights for {categoryTitle.toLowerCase()}</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

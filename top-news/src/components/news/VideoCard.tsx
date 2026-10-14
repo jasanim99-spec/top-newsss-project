@@ -27,10 +27,44 @@ function formatDuration(seconds: number): string {
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
+function getYouTubeThumbnail(url: string, defaultThumb: string): string {
+  if (defaultThumb && !defaultThumb.includes('placeholder') && !defaultThumb.includes('unsplash')) {
+    return defaultThumb;
+  }
+  let videoId = '';
+  if (url.includes('embed/')) videoId = url.split('embed/')[1]?.split('?')[0];
+  else if (url.includes('shorts/')) videoId = url.split('shorts/')[1]?.split('?')[0];
+  else if (url.includes('watch?v=')) videoId = url.split('watch?v=')[1]?.split('&')[0];
+  else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1]?.split('?')[0];
+  
+  if (videoId) {
+    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  }
+  return defaultThumb || '/placeholder.svg';
+}
+
 export function VideoCard({ video, variant = 'default', className = '' }: VideoCardProps) {
   const categoryClass = categoryColors[video.category as keyof typeof categoryColors] || 'bg-gray-600 text-white';
   const videoUrl = `/video/${video.language}/${video.category}/${video.topic}/${video.slug}`;
   const timeAgo = safeFormatDistanceToNow(video.publishedAt);
+  const displayThumbnail = getYouTubeThumbnail(video.videoUrl, video.thumbnailUrl);
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const img = e.currentTarget;
+    img.onerror = null;
+    let videoId = '';
+    const url = video.videoUrl || '';
+    if (url.includes('embed/')) videoId = url.split('embed/')[1]?.split('?')[0];
+    else if (url.includes('shorts/')) videoId = url.split('shorts/')[1]?.split('?')[0];
+    else if (url.includes('watch?v=')) videoId = url.split('watch?v=')[1]?.split('&')[0];
+    else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1]?.split('?')[0];
+
+    if (videoId && !img.src.includes('img.youtube.com')) {
+      img.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    } else {
+      img.src = '/placeholder.svg';
+    }
+  };
 
   if (variant === 'reel') {
     return (
@@ -44,14 +78,11 @@ export function VideoCard({ video, variant = 'default', className = '' }: VideoC
         <Link to={videoUrl} className="block h-full">
           <div className="relative h-full">
             <img
-              src={video.thumbnailUrl}
+              src={displayThumbnail}
               alt={video.title}
               className="w-full h-full object-cover"
               loading="lazy"
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = '/placeholder.svg';
-              }}
+              onError={handleImageError}
             />
             
             {/* Gradient Overlay */}
@@ -111,14 +142,11 @@ export function VideoCard({ video, variant = 'default', className = '' }: VideoC
       <Link to={videoUrl} className="block group">
         <div className="aspect-video relative overflow-hidden">
           <img
-            src={video.thumbnailUrl}
+            src={displayThumbnail}
             alt={video.title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = '/placeholder.svg';
-            }}
+            onError={handleImageError}
           />
           
           {/* Play Button Overlay */}

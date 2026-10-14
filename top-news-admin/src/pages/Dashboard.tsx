@@ -50,15 +50,19 @@ const Dashboard: React.FC = () => {
   const { data: newsStats, isLoading: newsLoading } = useQuery({
     queryKey: ['news-stats'],
     queryFn: () => newsService.getNewsStats(),
-    staleTime: 0,
-    refetchInterval: 5000,
+    staleTime: 5000,
+    refetchInterval: 10000,
+    retry: 3,
+    placeholderData: (previousData) => previousData,
   });
 
   const { data: videoStats, isLoading: videoLoading } = useQuery({
     queryKey: ['video-stats'],
     queryFn: () => videoService.getVideoStats(),
-    staleTime: 0,
-    refetchInterval: 5000,
+    staleTime: 5000,
+    refetchInterval: 10000,
+    retry: 3,
+    placeholderData: (previousData) => previousData,
   });
 
   const { data: teamMembers = [] } = useQuery({
@@ -69,17 +73,17 @@ const Dashboard: React.FC = () => {
 
   const { data: subscriberData } = useQuery({
     queryKey: ['push-subscriber-count'],
-    queryFn: () => fetch(`${API}/notifications/subscribers/count`).then(r => r.json()),
+    queryFn: () => fetch(`${API}/notifications/subscribers/count`).then(r => r.ok ? r.json() : { count: 0 }).catch(() => ({ count: 0 })),
     staleTime: 10000,
   });
 
   const { data: adsData } = useQuery({
     queryKey: ['ads-stats'],
-    queryFn: () => fetch(`${API}/ads`).then(r => r.json()),
+    queryFn: () => fetch(`${API}/ads`).then(r => r.ok ? r.json() : { ads: [] }).catch(() => ({ ads: [] })),
     staleTime: 10000,
   });
 
-  if (newsLoading || videoLoading) {
+  if ((newsLoading || videoLoading) && !newsStats && !videoStats) {
     return <LoadingSpinner />;
   }
 
@@ -228,7 +232,7 @@ const Dashboard: React.FC = () => {
               {totalVideos > 0 ? totalVideos.toLocaleString() : '0'}
             </p>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1.5 flex items-center justify-between">
-              <span>Short Videos</span>
+              <span>Videos</span>
             </p>
           </div>
         </div>
@@ -403,7 +407,7 @@ const Dashboard: React.FC = () => {
               <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
                 <Video className="w-4 h-4 text-indigo-400" />
               </div>
-              <h3 className="font-bold text-base tracking-tight">Recent Short Video Clips</h3>
+              <h3 className="font-bold text-base tracking-tight">Recent Video Clips</h3>
             </div>
             <button
               onClick={() => navigate('/videos')}
@@ -418,7 +422,7 @@ const Dashboard: React.FC = () => {
             {recentVideosList.length === 0 ? (
               <div className="text-center py-10 text-slate-400 text-xs font-semibold">
                 <Video className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                No short videos uploaded yet.
+                No videos uploaded yet.
               </div>
             ) : (
               recentVideosList.slice(0, 5).map((item: any) => (

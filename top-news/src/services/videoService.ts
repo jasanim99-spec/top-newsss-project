@@ -12,7 +12,7 @@ import {
 import { db } from '@/firebase/firestore';
 import { NewsVideo, VideoResponse } from '@/store/newsStore';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://top-newsss-project.vercel.app';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 const VIDEOS_COLLECTION = 'videos';
 
 const mapDocToNewsVideo = (docSnap: QueryDocumentSnapshot<DocumentData> | DocumentData, id: string): NewsVideo => {
@@ -62,16 +62,18 @@ export const videoService = {
     category?: string;
     topic?: string;
     limitNum?: number;
+    page?: number;
     startAfterDoc?: any;
   } = {}): Promise<VideoResponse> {
     const pageSize = options.limitNum || 10;
+    const pageNum = options.page || 1;
 
     const queryParams = new URLSearchParams();
     queryParams.append('status', 'published');
     queryParams.append('limit', pageSize.toString());
-    if (options.category) queryParams.append('category', options.category);
+    queryParams.append('page', pageNum.toString());
+    if (options.category && options.category !== 'all') queryParams.append('category', options.category);
     if (options.topic) queryParams.append('topic', options.topic);
-    if (options.language) queryParams.append('language', options.language);
 
     try {
       const res = await fetch(`${API_BASE_URL}/short-videos?${queryParams.toString()}`);

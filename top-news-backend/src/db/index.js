@@ -11,9 +11,10 @@ export const pool = connectionString
   ? new Pool({
       connectionString,
       ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false },
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      max: 10,
+      idleTimeoutMillis: 60000,
+      connectionTimeoutMillis: 30000,
+      keepAlive: true,
     })
   : new Pool({
       host: process.env.DB_HOST || 'localhost',
@@ -21,9 +22,10 @@ export const pool = connectionString
       user: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'top_news',
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      max: 10,
+      idleTimeoutMillis: 60000,
+      connectionTimeoutMillis: 30000,
+      keepAlive: true,
     });
 
 pool.on('error', (err) => {

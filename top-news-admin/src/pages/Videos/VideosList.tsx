@@ -111,15 +111,15 @@ const VideosList: React.FC = () => {
               SHORT CLIPS STUDIO 9:16
             </span>
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Short Videos Management</h1>
-          <p className="text-slate-300 text-sm font-medium max-w-2xl">Manage 9:16 short news clips, video status, thumbnail previews, and video analytics.</p>
+          <h1 className="text-3xl font-black text-white tracking-tight">Videos Management</h1>
+          <p className="text-slate-300 text-sm font-medium max-w-2xl">Manage news videos, video status, thumbnail previews, and video analytics.</p>
         </div>
         <Link
           to="/videos/create"
           className="relative z-10 inline-flex items-center justify-center px-5 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl active:scale-95 transition-all font-bold text-xs shadow-lg shadow-purple-500/25 gap-2 shrink-0 cursor-pointer"
         >
           <Plus className="w-4.5 h-4.5" />
-          <span>Create Short Clip</span>
+          <span>Create Video</span>
         </Link>
       </div>
 
@@ -134,7 +134,7 @@ const VideosList: React.FC = () => {
 
       {filteredVideos.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 p-12 text-center rounded-2xl border border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-medium shadow-sm transition-colors">
-          No short videos found.
+          No videos found.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

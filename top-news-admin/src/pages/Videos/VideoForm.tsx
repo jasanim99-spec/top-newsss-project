@@ -134,11 +134,11 @@ const VideoForm: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="px-3 py-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[10px] font-extrabold tracking-wider uppercase rounded-full shadow-xs">
-                SHORT CLIP STUDIO
+                VIDEO STUDIO
               </span>
             </div>
             <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-              {isEditing ? 'Edit Short Video Clip' : 'Upload New Short Video'}
+              {isEditing ? 'Edit Video Clip' : 'Upload New Video'}
             </h1>
           </div>
         </div>

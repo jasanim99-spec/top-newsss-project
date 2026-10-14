@@ -84,8 +84,11 @@ router.get('/', async (req, res) => {
     }
 
     if (language && language.trim() !== '' && language.toLowerCase() !== 'all') {
-      params.push(language.toLowerCase().trim());
-      conditions.push(`LOWER(language) = $${params.length}`);
+      const checkLangRes = await pool.query('SELECT 1 FROM short_videos WHERE LOWER(language) = $1 LIMIT 1', [language.toLowerCase().trim()]);
+      if (checkLangRes.rows.length > 0) {
+        params.push(language.toLowerCase().trim());
+        conditions.push(`LOWER(language) = $${params.length}`);
+      }
     }
 
     if (search && search.trim() !== '') {

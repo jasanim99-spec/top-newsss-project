@@ -44,6 +44,14 @@ export const ReporterGoals: React.FC = () => {
   const badges = goalsData?.badges || [];
   const leaderboard = leaderboardData?.leaderboard || [];
 
+  // Match current reporter rank from leaderboard or backend goals calculation
+  const userEntry = leaderboard.find(l => 
+    (l.authorId && l.authorId.toLowerCase().trim() === authorId.toLowerCase().trim()) ||
+    (l.name && l.name.toLowerCase().trim() === reporterName.toLowerCase().trim())
+  );
+  const currentRank = userEntry?.rank || goalsData?.rank || 1;
+  const rankMedal = currentRank === 1 ? '🥇' : currentRank === 2 ? '🥈' : currentRank === 3 ? '🥉' : '🎖️';
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       {/* 1. HERO GOALS BANNER */}
@@ -70,11 +78,11 @@ export const ReporterGoals: React.FC = () => {
         {/* RANK BADGE */}
         <div className="relative z-10 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 flex items-center gap-4 flex-shrink-0">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-400 to-orange-500 text-slate-950 flex items-center justify-center font-black text-xl shadow-lg shadow-amber-500/30">
-            🥇
+            {rankMedal}
           </div>
           <div>
             <p className="text-[10px] font-extrabold uppercase text-amber-300 tracking-wider">Team Ranking</p>
-            <p className="text-lg font-black text-white font-mono">Rank #{goalsData?.rank || 1}</p>
+            <p className="text-lg font-black text-white font-mono">Rank #{currentRank}</p>
           </div>
         </div>
       </div>

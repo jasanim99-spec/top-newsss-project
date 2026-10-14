@@ -88,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       items: [
         { path: '/news/reviews', icon: Clock, label: 'Review Submissions', iconColor: 'text-amber-500', activeGradient: 'from-amber-600 to-orange-600' },
         { path: '/news', icon: FileText, label: 'All News Articles', iconColor: 'text-indigo-500', activeGradient: 'from-indigo-600 to-purple-600' },
-        { path: '/videos', icon: Video, label: 'Short Videos', iconColor: 'text-purple-500', activeGradient: 'from-purple-600 to-pink-600' },
+        { path: '/videos', icon: Video, label: 'Videos', iconColor: 'text-purple-500', activeGradient: 'from-purple-600 to-pink-600' },
       ]
     },
     {

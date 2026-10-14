@@ -56,37 +56,16 @@ export const newsService = {
       if (res.ok) {
         const data = await res.json();
         return {
-          total: data.total || 0,
+          total: typeof data.total === 'number' ? data.total : (data.articles?.length || 0),
           page: data.page || pageNum,
           limit: data.limit || limitNum,
           articles: data.articles || []
         };
+      } else {
+        throw new Error(`News API returned status ${res.status}`);
       }
     } catch (err) {
-      console.warn('PostgreSQL API news fetch error, falling back to Firestore:', err);
-    }
-
-    // Fallback to Firestore if backend server is unreachable
-    try {
-      const newsColRef = collection(db, 'news');
-      const querySnapshot = await getDocs(newsColRef);
-      let articles = querySnapshot.docs
-        .filter(d => d.data().status !== 'deleted')
-        .map(d => newsFromFirestore(d, d.id));
-
-      if (options.category && options.category.toLowerCase() !== 'all') {
-        articles = articles.filter(a => (a.category || '').toLowerCase() === options.category!.toLowerCase());
-      }
-      if (options.status && options.status !== 'all') {
-        articles = articles.filter(a => (a.status || 'published').toLowerCase() === options.status!.toLowerCase());
-      }
-
-      articles.sort((a, b) => parseDateToMillis(b.publishedAt) - parseDateToMillis(a.publishedAt));
-      const total = articles.length;
-      const paginated = articles.slice((pageNum - 1) * limitNum, pageNum * limitNum);
-
-      return { total, page: pageNum, limit: limitNum, articles: paginated };
-    } catch (e) {
+      console.warn('PostgreSQL API news fetch error:', err);
       return { total: 0, page: pageNum, limit: limitNum, articles: [] };
     }
   },
@@ -330,21 +309,11 @@ export const newsService = {
       if (res.ok) {
         return await res.json();
       }
+      throw new Error(`getNewsStats returned status ${res.status}`);
     } catch (err) {
       console.warn('PostgreSQL API getNewsStats error:', err);
+      throw err;
     }
-
-    const fallback = await this.getNews({ limit: 500, status: 'all' });
-    const articles = fallback.articles || [];
-    return {
-      total: articles.length,
-      published: articles.filter(a => a.status === 'published').length,
-      pending: articles.filter(a => a.status === 'pending').length,
-      draft: articles.filter(a => a.status === 'draft').length,
-      rejected: articles.filter(a => a.status === 'rejected').length,
-      totalViews: articles.reduce((acc, curr) => acc + (curr.views || 0), 0),
-      recent: articles.slice(0, 5)
-    };
   },
 
   /**

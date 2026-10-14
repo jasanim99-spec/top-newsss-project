@@ -148,6 +148,33 @@ router.get('/reporter/:reporterId', async (req, res) => {
       }
     ];
 
+    // Dynamic rank calculation
+    let calculatedRank = 1;
+    try {
+      const rankRes = await query(
+        `SELECT u.id as author_id, u.name as name,
+                COALESCE(COUNT(CASE WHEN na.status = 'published' AND na.created_at >= $1 AND na.created_at <= $2 THEN 1 END), 0)::int as published_count,
+                COALESCE(SUM(CASE WHEN na.status = 'published' AND na.created_at >= $1 AND na.created_at <= $2 THEN na.views ELSE 0 END), 0)::int as total_views
+         FROM users u
+         LEFT JOIN news_articles na ON (na.author_id = u.id OR LOWER(na.author_name) = LOWER(u.name))
+         WHERE u.role = 'reporter'
+         GROUP BY u.id, u.name
+         ORDER BY published_count DESC, total_views DESC, u.name ASC`,
+        [startOfMonth, endOfMonth]
+      );
+      if (rankRes && rankRes.rows) {
+        const foundIdx = rankRes.rows.findIndex(r => 
+          (r.author_id && r.author_id.toLowerCase().trim() === decodedId.toLowerCase().trim()) ||
+          (r.name && r.name.toLowerCase().trim() === decodedId.toLowerCase().trim())
+        );
+        if (foundIdx !== -1) {
+          calculatedRank = foundIdx + 1;
+        }
+      }
+    } catch (rErr) {
+      console.warn('Rank calculation error:', rErr.message);
+    }
+
     // Compute Articles Progress percentage
     const articlePercentage = Math.min(100, Math.round((publishedArticlesCount / targetArticles) * 100));
     const viewsPercentage = Math.min(100, Math.round((currentViews / targetViews) * 100));
@@ -163,7 +190,7 @@ router.get('/reporter/:reporterId', async (req, res) => {
       activeStreak,
       approvalRate,
       badges,
-      rank: 1
+      rank: calculatedRank
     });
   } catch (err) {
     console.error('Error fetching reporter goals:', err);

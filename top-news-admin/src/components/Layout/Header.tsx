@@ -138,7 +138,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 className="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-purple-50 dark:hover:bg-slate-800 hover:text-purple-900 dark:hover:text-white flex items-center gap-3 font-bold transition-colors"
               >
                 <Video className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                Create Short Video
+                Create Video
               </button>
             </div>
           )}

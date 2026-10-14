@@ -50,6 +50,9 @@ export interface NewsArticle {
   authorRole?: string;
   authorCity?: string;
   authorPhoto?: string;
+  authorEmail?: string;
+  isBreaking?: boolean;
+  aiSummary?: string;
   pressCardNo?: string;
   editorialNotes?: string;
   location?: {

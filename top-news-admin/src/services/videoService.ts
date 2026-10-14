@@ -57,29 +57,11 @@ export const videoService = {
           videos: videoList,
           articles: videoList
         };
+      } else {
+        throw new Error(`Video API returned status ${res.status}`);
       }
     } catch (err) {
-      console.warn('PostgreSQL API video fetch error, falling back to Firestore:', err);
-    }
-
-    // Fallback to Firestore
-    try {
-      const videosColRef = collection(db, 'videos');
-      const querySnapshot = await getDocs(videosColRef);
-      let videos = querySnapshot.docs
-        .filter(d => d.data().status !== 'deleted')
-        .map(d => videoFromFirestore(d, d.id));
-
-      if (options.category && options.category.toLowerCase() !== 'all') {
-        videos = videos.filter(v => (v.category || '').toLowerCase() === options.category!.toLowerCase());
-      }
-
-      videos.sort((a, b) => parseDateToMillis(b.publishedAt) - parseDateToMillis(a.publishedAt));
-      const total = videos.length;
-      const paginated = videos.slice((pageNum - 1) * limitNum, pageNum * limitNum);
-
-      return { total, page: pageNum, limit: limitNum, videos: paginated, articles: paginated };
-    } catch (e) {
+      console.warn('PostgreSQL API video fetch error:', err);
       return { total: 0, page: pageNum, limit: limitNum, videos: [], articles: [] };
     }
   },
@@ -268,18 +250,10 @@ export const videoService = {
       if (res.ok) {
         return await res.json();
       }
+      throw new Error(`getVideoStats returned status ${res.status}`);
     } catch (err) {
       console.warn('PostgreSQL API getVideoStats error:', err);
+      throw err;
     }
-
-    const fallback = await this.getVideos({ limit: 500, status: 'all' });
-    const videos = fallback.articles || [];
-    return {
-      total: videos.length,
-      published: videos.filter(v => v.status === 'published').length,
-      draft: videos.filter(v => v.status === 'draft').length,
-      totalViews: videos.reduce((acc, curr) => acc + (curr.views || 0), 0),
-      recent: videos.slice(0, 5)
-    };
   }
 };

@@ -24,6 +24,18 @@ export const UI_TRANSLATIONS: Record<string, Record<string, string>> = {
   'Technology': { en: 'Technology', gu: 'ટેકનોલોજી', hi: 'तकनीक', pa: 'ਤਕਨਾਲੋਜੀ', zh: '科技', ru: 'Технологии' },
   'technology': { en: 'Technology', gu: 'ટેકનોલોજી', hi: 'तकનીક', pa: 'ਤਕਨਾਲੋਜੀ', zh: '科技', ru: 'Технологии' },
 
+  'EDUCATION': { en: 'EDUCATION', gu: 'શિક્ષણ', hi: 'शिक्षा', pa: 'ਸਿੱਖਿਆ', zh: '教育', ru: 'ОБРАЗОВАНИЕ' },
+  'Education': { en: 'Education', gu: 'શિક્ષણ', hi: 'शिक्षा', pa: 'ਸਿੱਖਿਆ', zh: '教育', ru: 'Образование' },
+  'education': { en: 'Education', gu: 'શિક્ષણ', hi: 'शिक्षा', pa: 'ਸਿੱਖਿਆ', zh: '教育', ru: 'Образование' },
+
+  'ENVIRONMENT': { en: 'ENVIRONMENT', gu: 'પર્યાવરણ', hi: 'पर्यावरण', pa: 'ਵਾਤਾਵਰਣ', zh: '环境', ru: 'ОКРУЖАЮЩАЯ СРЕДА' },
+  'Environment': { en: 'Environment', gu: 'પર્યાવરણ', hi: 'पर्यावरण', pa: 'ਵਾਤਾਵਰਣ', zh: '环境', ru: 'Окружающая среदा' },
+  'environment': { en: 'Environment', gu: 'પર્યાવરણ', hi: 'पर्यावरण', pa: 'ਵਾਤਾਵਰਣ', zh: '环境', ru: 'Окружающая среда' },
+
+  'SCIENCE': { en: 'SCIENCE', gu: 'વિજ્ઞાન', hi: 'विज्ञान', pa: 'ਵਿਗਿਆਨ', zh: '科学', ru: 'НАУКА' },
+  'Science': { en: 'Science', gu: 'વિજ્ઞાન', hi: 'विज्ञान', pa: 'ਵਿਗਿਆਨ', zh: '科学', ru: 'Наука' },
+  'science': { en: 'Science', gu: 'વિજ્ઞાન', hi: 'विज्ञान', pa: 'ਵਿਗਿਆਨ', zh: '科学', ru: 'Наука' },
+
   'SPORTS': { en: 'SPORTS', gu: 'રમતગમત', hi: 'खेल', pa: 'ਖੇਡਾਂ', zh: '体育', ru: 'СПОРТ' },
   'Sports': { en: 'Sports', gu: 'રમતગમત', hi: 'खेल', pa: 'ਖੇਡਾਂ', zh: '体育', ru: 'Спорт' },
   'sports': { en: 'Sports', gu: 'રમતગમત', hi: 'खेल', pa: 'ਖੇਡਾਂ', zh: '体育', ru: 'Спорт' },

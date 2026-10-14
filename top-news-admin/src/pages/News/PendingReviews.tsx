@@ -53,8 +53,8 @@ export const PendingReviews: React.FC = () => {
   // Reporter Leaves Query
   const { data: leavesData } = useQuery({
     queryKey: ['pending-reporter-leaves'],
-    queryFn: () => fetch(`${API}/leaves?status=all`).then(r => r.json()),
-    refetchInterval: 3000,
+    queryFn: () => fetch(`${API}/leaves?status=all`).then(r => r.ok ? r.json() : { leaves: [] }).catch(() => ({ leaves: [] })),
+    refetchInterval: 5000,
   });
 
   const leavesList = leavesData?.leaves || [];

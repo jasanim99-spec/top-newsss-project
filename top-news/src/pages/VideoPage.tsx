@@ -17,12 +17,17 @@ import ReactMarkdown from 'react-markdown';
 
 const categoryOptions = [
   { value: 'all', label: 'All Categories' },
-  { value: 'sports', label: 'Sports' },
-  { value: 'technology', label: 'Technology' },
-  { value: 'business', label: 'Business' },
-  { value: 'entertainment', label: 'Entertainment' },
+  { value: 'world', label: 'World' },
   { value: 'politics', label: 'Politics' },
-  { value: 'health', label: 'Health' }
+  { value: 'business', label: 'Business' },
+  { value: 'technology', label: 'Technology' },
+  { value: 'education', label: 'Education' },
+  { value: 'environment', label: 'Environment' },
+  { value: 'science', label: 'Science' },
+  { value: 'sports', label: 'Sports' },
+  { value: 'entertainment', label: 'Entertainment' },
+  { value: 'health', label: 'Health' },
+  { value: 'automobile', label: 'Automobile' }
 ];
 
 const sortOptions = [
@@ -187,13 +192,15 @@ export default function VideoPage() {
                 <div className="aspect-video bg-black rounded-2xl overflow-hidden mb-6 shadow-2xl border border-slate-800 relative">
                   {currentVideo.videoUrl.includes('youtube.com') || currentVideo.videoUrl.includes('youtu.be') ? (
                     <iframe
-                      src={
-                        currentVideo.videoUrl.includes('shorts/')
-                          ? `https://www.youtube.com/embed/${currentVideo.videoUrl.split('shorts/')[1]?.split('?')[0]}?autoplay=1`
-                          : currentVideo.videoUrl.includes('watch?v=')
-                          ? `https://www.youtube.com/embed/${currentVideo.videoUrl.split('watch?v=')[1]?.split('&')[0]}?autoplay=1`
-                          : `https://www.youtube.com/embed/${currentVideo.videoUrl.split('youtu.be/')[1]?.split('?')[0]}?autoplay=1`
-                      }
+                      src={(() => {
+                        const url = currentVideo.videoUrl;
+                        let videoId = '';
+                        if (url.includes('embed/')) videoId = url.split('embed/')[1]?.split('?')[0];
+                        else if (url.includes('shorts/')) videoId = url.split('shorts/')[1]?.split('?')[0];
+                        else if (url.includes('watch?v=')) videoId = url.split('watch?v=')[1]?.split('&')[0];
+                        else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1]?.split('?')[0];
+                        return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0` : url;
+                      })()}
                       title={currentVideo.title}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
@@ -202,14 +209,15 @@ export default function VideoPage() {
                   ) : (
                     <video
                       key={currentVideo.videoUrl}
+                      src={currentVideo.videoUrl}
                       controls
+                      autoPlay
                       playsInline
                       preload="auto"
                       poster={currentVideo.thumbnailUrl}
                       className="w-full h-full object-contain"
                     >
                       <source src={currentVideo.videoUrl} type="video/mp4" />
-                      <source src={currentVideo.videoUrl} type="video/webm" />
                       Your browser does not support the video tag.
                     </video>
                   )}
@@ -394,12 +402,12 @@ export default function VideoPage() {
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Select value={categoryFilter} onValueChange={handleCategoryChange}>
-                <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px] bg-slate-900 border-slate-700 text-slate-100">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent className="data-[state=open]:bg-white"> 
+                <SelectContent className="bg-slate-900 border border-slate-700 text-slate-100 shadow-2xl z-50"> 
                   {categoryOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem key={option.value} value={option.value} className="text-slate-100 focus:bg-slate-800 focus:text-white cursor-pointer py-2">
                       {option.label}
                     </SelectItem>
                   ))}
@@ -407,12 +415,12 @@ export default function VideoPage() {
               </Select>
 
               <Select value={sortBy} onValueChange={handleSortChange}>
-                <SelectTrigger className="w-full sm:w-[150px]">
+                <SelectTrigger className="w-full sm:w-[150px] bg-slate-900 border-slate-700 text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="data-[state=open]:bg-white">
+                <SelectContent className="bg-slate-900 border border-slate-700 text-slate-100 shadow-2xl z-50">
                   {sortOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem key={option.value} value={option.value} className="text-slate-100 focus:bg-slate-800 focus:text-white cursor-pointer py-2">
                       {option.label}
                     </SelectItem>
                   ))}

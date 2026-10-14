@@ -193,6 +193,9 @@ const categories = [
   { name: 'Politics', href: '/category/politics' },
   { name: 'Business', href: '/category/business' },
   { name: 'Technology', href: '/category/technology' },
+  { name: 'Education', href: '/category/education' },
+  { name: 'Environment', href: '/category/environment' },
+  { name: 'Science', href: '/category/science' },
   { name: 'Sports', href: '/category/sports' },
   { name: 'Entertainment', href: '/category/entertainment' },
 ];

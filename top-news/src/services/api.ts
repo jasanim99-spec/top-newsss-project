@@ -64,7 +64,8 @@ class NewsAPI {
       language: params.language,
       category: params.category,
       topic: params.topic,
-      limitNum: params.limit || 10
+      limitNum: params.limit || 10,
+      page: params.page || 1
     });
   }
 
