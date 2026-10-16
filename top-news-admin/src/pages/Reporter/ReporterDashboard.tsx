@@ -42,8 +42,47 @@ export const ReporterDashboard: React.FC = () => {
   const displayEmail = admin?.email || user?.email || 'reporter@topnews.com';
   const pressId = admin?.pressCardNo || `PRESS-TN-${(authorId || '000').slice(0, 6).toUpperCase()}`;
 
-  const currentHour = new Date().getHours();
-  const greeting = currentHour < 12 ? '🌅 Good Morning' : currentHour < 17 ? '☀️ Good Afternoon' : '🌙 Good Evening';
+  // Precise Indian Standard Time (Gujarat / Asia/Kolkata)
+  const getGujaratHour = () => {
+    try {
+      const istStr = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Kolkata',
+        hour: 'numeric',
+        hour12: false
+      }).format(new Date());
+      return parseInt(istStr, 10);
+    } catch (e) {
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const istDate = new Date(utc + (3600000 * 5.5));
+      return istDate.getHours();
+    }
+  };
+
+  const getGujaratTimeFormatted = () => {
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).format(new Date());
+    } catch (e) {
+      return '';
+    }
+  };
+
+  const currentHour = getGujaratHour();
+  const gujaratTimeStr = getGujaratTimeFormatted();
+  const greeting = 
+    currentHour >= 4 && currentHour < 12 
+      ? '🌅 Good Morning' 
+      : currentHour >= 12 && currentHour < 17 
+      ? '☀️ Good Afternoon' 
+      : currentHour >= 17 && currentHour < 21 
+      ? '🌆 Good Evening' 
+      : '🌙 Good Night';
+
   const motivationalMessages = [
     "Truth in reporting changes the world. Keep bringing real stories to light!",
     "Your dedication to journalism keeps our readers informed and empowered.",
@@ -96,6 +135,11 @@ export const ReporterDashboard: React.FC = () => {
               <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-extrabold px-3 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
                 {admin?.role || 'Reporter'}
               </span>
+              {gujaratTimeStr && (
+                <span className="bg-white/10 text-cyan-200 border border-white/15 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  🇮🇳 {gujaratTimeStr} IST
+                </span>
+              )}
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">Welcome back, {displayName}!</h1>
             <p className="text-xs text-indigo-200/90 font-medium italic mt-1">
