@@ -83,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: currentUser.uid,
           email: currentUser.email || 'jasanim99@gmail.com',
           name: (currentUser.email || 'Admin').split('@')[0],
-          role: (currentUser.email || '').includes('reporter') ? 'reporter' : 'admin',
+          role: ['jasanim99@gmail.com', 'admin@topnews.com'].includes((currentUser.email || '').toLowerCase().trim()) ? 'admin' : 'reporter',
           active: true,
           createdAt: new Date().toISOString()
         };

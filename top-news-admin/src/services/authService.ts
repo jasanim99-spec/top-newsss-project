@@ -131,7 +131,7 @@ export const authService = {
     );
 
     const isDefaultAdmin = cleanEmail === 'jasanim99@gmail.com' || cleanEmail === 'admin@topnews.com';
-    const isDefaultReporter = cleanEmail === 'reporter@topnews.com';
+    const isDefaultReporter = cleanEmail === 'reporter@topnews.com' || cleanEmail === 'mahin3897@gmail.com';
 
     if (!registeredMember && !isDefaultAdmin && !isDefaultReporter && !userPasswords[cleanEmail]) {
       throw new Error('This account is not registered. Please ask Admin to add your ID & Password.');
@@ -189,7 +189,7 @@ export const authService = {
         _id: targetUid,
         email: cleanEmail,
         name: registeredMember?.name || cleanEmail.split('@')[0],
-        role: registeredMember?.role || (cleanEmail.includes('reporter') ? 'reporter' : 'admin'),
+        role: registeredMember?.role || (['jasanim99@gmail.com', 'admin@topnews.com'].includes(cleanEmail) ? 'admin' : 'reporter'),
         active: true,
         createdAt: new Date().toISOString()
       };
@@ -372,7 +372,7 @@ export const authService = {
     }
 
     const fallbackName = cleanEmail ? cleanEmail.split('@')[0] : 'Admin';
-    const fallbackRole = cleanEmail.includes('reporter') ? 'reporter' : 'admin';
+    const fallbackRole = ['jasanim99@gmail.com', 'admin@topnews.com'].includes(cleanEmail) ? 'admin' : 'reporter';
     return {
       _id: uid || `user_${Date.now()}`,
       id: uid || `user_${Date.now()}`,
