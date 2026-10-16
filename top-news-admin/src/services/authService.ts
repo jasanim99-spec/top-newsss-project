@@ -1,4 +1,3 @@
-import { initializeApp, deleteApp } from 'firebase/app';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -7,7 +6,6 @@ import {
   browserSessionPersistence,
   signOut,
   sendPasswordResetEmail,
-  getAuth,
   User
 } from 'firebase/auth';
 import {
@@ -22,7 +20,6 @@ import {
 } from 'firebase/firestore';
 import { auth } from '@/firebase/auth';
 import { db } from '@/firebase/firestore';
-import { firebaseConfig } from '@/firebase/config';
 import { AdminUser } from '@/types';
 import { adminFromFirestore, adminToFirestore } from '@/utils/converters';
 
@@ -169,6 +166,11 @@ export const authService = {
       userCredential = await signInWithEmailAndPassword(auth, cleanEmail, cleanPass);
       isPasswordValid = true;
     } catch (authErr: any) {
+      if (authErr?.code === 'auth/user-not-found' && isPasswordValid && cleanPass.length >= 6) {
+        try {
+          userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, cleanPass);
+        } catch (createErr) {}
+      }
       console.warn('Firebase Auth sign-in note:', authErr?.code);
     }
 
@@ -451,23 +453,6 @@ export const authService = {
     
     if (data.password && data.password.trim()) {
       savePersistentPassword(cleanEmail, data.password.trim());
-    }
-
-    if (data.password && data.password.length >= 6) {
-      try {
-        // Use an isolated secondary Firebase App so the current Admin session is NEVER disturbed or signed out!
-        const secondaryAppName = `SecondaryAuthApp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-        const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
-        const secondaryAuth = getAuth(secondaryApp);
-
-        const userCred = await createUserWithEmailAndPassword(secondaryAuth, cleanEmail, data.password);
-        uid = userCred.user.uid;
-
-        await signOut(secondaryAuth);
-        await deleteApp(secondaryApp);
-      } catch (authErr: any) {
-        console.warn('Auth user creation note:', authErr?.message);
-      }
     }
 
     let createdUser: AdminUser | null = null;
