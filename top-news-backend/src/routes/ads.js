@@ -37,10 +37,11 @@ router.post('/', async (req, res) => {
     const { title, image_url, link_url, position = 'sidebar', is_active = true, start_date, end_date } = req.body;
     if (!title || !link_url) return res.status(400).json({ error: 'title and link_url are required' });
 
+    const adId = req.body.id || `ad_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const result = await pool.query(
-      `INSERT INTO advertisements (title, image_url, link_url, position, is_active, status, start_date, end_date)
-       VALUES ($1, $2, $3, $4, $5, 'approved', $6, $7) RETURNING *`,
-      [title.trim(), image_url || null, link_url.trim(), position, is_active,
+      `INSERT INTO advertisements (id, title, image_url, link_url, position, is_active, status, start_date, end_date)
+       VALUES ($1, $2, $3, $4, $5, $6, 'approved', $7, $8) RETURNING *`,
+      [adId, title.trim(), image_url || null, link_url.trim(), position, is_active,
        start_date ? new Date(start_date) : null, end_date ? new Date(end_date) : null]
     );
     res.status(201).json(result.rows[0]);
@@ -116,10 +117,11 @@ router.post('/request', async (req, res) => {
       return res.status(400).json({ error: 'client_name, client_email, title, and link_url are required' });
     }
 
+    const adId = req.body.id || `ad_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const result = await pool.query(
-      `INSERT INTO advertisements (title, image_url, link_url, position, is_active, client_name, client_email, client_phone, status, notes)
-       VALUES ($1, $2, $3, $4, false, $5, $6, $7, 'pending', $8) RETURNING *`,
-      [title.trim(), image_url || null, link_url.trim(), position, client_name.trim(), client_email.trim(), client_phone || null, notes || null]
+      `INSERT INTO advertisements (id, title, image_url, link_url, position, is_active, client_name, client_email, client_phone, status, notes)
+       VALUES ($1, $2, $3, $4, $5, false, $6, $7, $8, 'pending', $9) RETURNING *`,
+      [adId, title.trim(), image_url || null, link_url.trim(), position, client_name.trim(), client_email.trim(), client_phone || null, notes || null]
     );
     res.status(201).json({ message: 'Ad campaign request submitted successfully! Pending admin review.', ad: result.rows[0] });
   } catch (err) {
