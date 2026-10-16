@@ -111,8 +111,16 @@ router.get('/', async (req, res) => {
     }
 
     if (authorId && authorId.trim() !== '') {
-      params.push(`%${authorId.trim().toLowerCase()}%`);
-      conditions.push(`(LOWER(author_id) LIKE $${params.length} OR LOWER(author_name) LIKE $${params.length} OR LOWER(press_card_no) LIKE $${params.length})`);
+      const a = authorId.trim().toLowerCase();
+      params.push(`%${a}%`, a);
+      const pLike = params.length - 1;
+      const pExact = params.length;
+      conditions.push(`(
+        LOWER(author_id) LIKE $${pLike} 
+        OR LOWER(author_name) LIKE $${pLike} 
+        OR LOWER(press_card_no) LIKE $${pLike}
+        OR author_id IN (SELECT id FROM users WHERE LOWER(email) = $${pExact} OR LOWER(name) LIKE $${pLike})
+      )`);
     }
 
     if (search && search.trim() !== '') {
@@ -209,13 +217,26 @@ router.get('/stats/reporter/:authorId', async (req, res) => {
         COUNT(*) FILTER (WHERE status = 'rejected') as rejected,
         COALESCE(SUM(views) FILTER (WHERE status != 'deleted'), 0) as total_views
       FROM news_articles
-      WHERE (LOWER(author_id) = $1 OR LOWER(author_name) = $1)
+      WHERE (
+        LOWER(author_id) = $1 
+        OR LOWER(author_name) = $1
+        OR LOWER(author_name) LIKE '%' || $1 || '%'
+        OR author_id IN (SELECT id FROM users WHERE LOWER(email) = $1 OR LOWER(name) = $1 OR LOWER(name) LIKE '%' || $1 || '%')
+      )
     `;
     const statsRes = await pool.query(statsSql, [authId]);
     const s = statsRes.rows[0];
 
     const recentRes = await pool.query(
-      `SELECT * FROM news_articles WHERE status != 'deleted' AND (LOWER(author_id) = $1 OR LOWER(author_name) = $1) ORDER BY published_at DESC LIMIT 5`,
+      `SELECT * FROM news_articles 
+       WHERE status != 'deleted' 
+         AND (
+           LOWER(author_id) = $1 
+           OR LOWER(author_name) = $1
+           OR LOWER(author_name) LIKE '%' || $1 || '%'
+           OR author_id IN (SELECT id FROM users WHERE LOWER(email) = $1 OR LOWER(name) = $1 OR LOWER(name) LIKE '%' || $1 || '%')
+         ) 
+       ORDER BY published_at DESC LIMIT 5`,
       [authId]
     );
 

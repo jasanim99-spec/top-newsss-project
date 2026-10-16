@@ -56,8 +56,14 @@ router.get('/', async (req, res) => {
     const params = [];
 
     if (reporterId) {
-      params.push(reporterId.trim());
-      conditions.push(`reporter_id = $${params.length}`);
+      const r = reporterId.trim();
+      params.push(r);
+      conditions.push(`(
+        reporter_id = $${params.length} 
+        OR LOWER(reporter_id) = LOWER($${params.length})
+        OR LOWER(reporter_name) = LOWER($${params.length})
+        OR reporter_id IN (SELECT id FROM users WHERE LOWER(email) = LOWER($${params.length}) OR LOWER(name) = LOWER($${params.length}))
+      )`);
     }
 
     if (status && status !== 'all') {
@@ -79,12 +85,18 @@ router.get('/', async (req, res) => {
 router.get('/stats/:reporterId', async (req, res) => {
   try {
     const { reporterId } = req.params;
+    const r = (reporterId || '').trim();
     const result = await pool.query(
       `SELECT status, SUM(total_days) as days_count, COUNT(*) as app_count 
        FROM reporter_leaves 
-       WHERE reporter_id = $1 
+       WHERE (
+         reporter_id = $1 
+         OR LOWER(reporter_id) = LOWER($1)
+         OR LOWER(reporter_name) = LOWER($1)
+         OR reporter_id IN (SELECT id FROM users WHERE LOWER(email) = LOWER($1) OR LOWER(name) = LOWER($1))
+       ) 
        GROUP BY status`,
-      [reporterId]
+      [r]
     );
 
     let pending = 0;

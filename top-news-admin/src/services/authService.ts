@@ -317,10 +317,14 @@ export const authService = {
    */
   async getAdminProfile(uid: string, email?: string): Promise<AdminUser> {
     const cleanEmail = (email || '').toLowerCase().trim();
-    const lookupKey = uid || cleanEmail;
+    const primaryKey = cleanEmail || uid;
+    const secondaryKey = uid && uid !== cleanEmail ? uid : null;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(lookupKey)}`);
+      let res = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(primaryKey)}`);
+      if (!res.ok && secondaryKey) {
+        res = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(secondaryKey)}`);
+      }
       if (res.ok) {
         const u = await res.json();
         return {
