@@ -4,7 +4,7 @@ import { Plus, Trash2, Edit, ToggleLeft, ToggleRight, ExternalLink, MousePointer
 import toast from 'react-hot-toast';
 import AdsForm from './AdsForm';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+import { API_BASE_URL as API } from '@/services/apiConfig';
 
 async function fetchAds() {
   const res = await fetch(`${API}/ads`);

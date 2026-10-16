@@ -8,8 +8,8 @@ import { ArrowLeft, Sparkles, Languages, Zap, Mic, MapPin, UserCheck } from 'luc
 import { newsService, generateSlug } from '@/services/newsService';
 import { authService } from '@/services/authService';
 import { aiService } from '@/services/aiService';
-import { storageService } from '@/services/storageService';
 import { NewsArticle, LANGUAGE_OPTIONS, CATEGORIES } from '@/types';
+import { API_BASE_URL } from '@/services/apiConfig';
 import TagInput from '@/components/Common/TagInput';
 import FileUpload from '@/components/Common/FileUpload';
 import LoadingSpinner from '@/components/Common/LoadingSpinner';
@@ -65,10 +65,9 @@ export const NewsForm: React.FC = () => {
       } else {
         result = await newsService.createNews(newsData);
       }
-      
       if (sendPush && newsData.title) {
         try {
-          const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+          const API = API_BASE_URL;
           await fetch(`${API}/notifications/send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

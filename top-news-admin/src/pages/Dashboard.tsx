@@ -26,7 +26,7 @@ import { authService } from '@/services/authService';
 import LoadingSpinner from '@/components/Common/LoadingSpinner';
 import { useNavigate } from 'react-router-dom';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+import { API_BASE_URL as API } from '@/services/apiConfig';
 
 const formatTimeAgo = (dateInput: string | Date | number | undefined): string => {
   if (!dateInput) return 'Recently';

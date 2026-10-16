@@ -96,6 +96,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
+        // SHIELD: If an active admin session is running in this tab, do not let
+        // any background auth event or secondary user switch override the admin session!
+        const cached = getStoredSession();
+        if (cached?.admin?.role === 'admin' && currentUser.email && cached?.admin?.email && currentUser.email.toLowerCase() !== cached.admin.email.toLowerCase()) {
+          console.warn('Prevented background auth switch from hijacking active admin session:', currentUser.email);
+          return;
+        }
         setUser(currentUser);
         await fetchAdminProfile(currentUser);
       } else {

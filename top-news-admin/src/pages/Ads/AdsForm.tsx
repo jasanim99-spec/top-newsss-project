@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Image, Link, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+import { API_BASE_URL as API } from '@/services/apiConfig';
 
 interface Props {
   ad?: any;

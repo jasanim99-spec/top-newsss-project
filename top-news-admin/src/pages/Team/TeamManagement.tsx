@@ -363,6 +363,7 @@ export const TeamManagement: React.FC = () => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 createMutation.mutate();
               }}
               className="space-y-3.5"

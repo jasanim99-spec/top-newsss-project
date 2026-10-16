@@ -3,7 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Bell, Send, Users, Clock, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+import { API_BASE_URL as API } from '@/services/apiConfig';
 
 export default function PushNotify() {
   const [form, setForm] = useState({

@@ -23,7 +23,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+import { API_BASE_URL as API } from '@/services/apiConfig';
 
 export const LeaveManagement: React.FC = () => {
   const { user, admin } = useAuth();
