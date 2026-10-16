@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDNytnPODeEMXgeY0P1SHmH3QL06GSchrg",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "top-news-478c4.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "top-news-478c4",
