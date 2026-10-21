@@ -33,6 +33,25 @@ const VideoForm: React.FC = () => {
   const isEditing = !!id;
   const queryClient = useQueryClient();
   const [tempId] = useState(() => id || `video_${Date.now()}`);
+  const [detectingDuration, setDetectingDuration] = useState(false);
+
+  const handleAutoDetectDuration = async (url: string, setFieldValue: (field: string, value: any) => void) => {
+    if (!url) return;
+    setDetectingDuration(true);
+    try {
+      const res = await videoService.extractDuration(url);
+      if (res && res.duration > 0) {
+        setFieldValue('duration', res.duration);
+        toast.success(`Video duration auto-detected: ${res.formatted} (${res.duration}s)`);
+      } else {
+        toast.error('Could not auto-detect duration. Please enter manually.');
+      }
+    } catch (err) {
+      toast.error('Failed to auto-detect duration');
+    } finally {
+      setDetectingDuration(false);
+    }
+  };
 
   const { data: existingVideo, isLoading: isLoadingVideo } = useQuery({
     queryKey: ['video', id],
@@ -237,7 +256,15 @@ const VideoForm: React.FC = () => {
                   </label>
                   <FileUpload
                     value={values.videoUrl}
-                    onChange={(url) => setFieldValue('videoUrl', url)}
+                    onChange={async (url) => {
+                      setFieldValue('videoUrl', url);
+                      if (url && (url.includes('youtube.com') || url.includes('youtu.be'))) {
+                        await handleAutoDetectDuration(url, setFieldValue);
+                      }
+                    }}
+                    onDurationDetected={(dur) => {
+                      setFieldValue('duration', dur);
+                    }}
                     onFileUpload={(file, progress) => storageService.uploadVideo(file, tempId, progress)}
                     accept="video/*"
                     label="Video File"
@@ -264,15 +291,36 @@ const VideoForm: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Duration (seconds) *
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Duration (seconds) *
+                    </label>
+                    {values.videoUrl && (values.videoUrl.includes('youtube.com') || values.videoUrl.includes('youtu.be')) && (
+                      <button
+                        type="button"
+                        onClick={() => handleAutoDetectDuration(values.videoUrl, setFieldValue)}
+                        disabled={detectingDuration}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium underline flex items-center gap-1 disabled:opacity-50"
+                      >
+                        {detectingDuration ? 'Detecting...' : '⚡ Auto-Detect from YouTube'}
+                      </button>
+                    )}
+                  </div>
                   <Field
                     name="duration"
                     type="number"
                     min="1"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                  {values.duration > 0 && (
+                    <div className="text-xs text-green-700 mt-1 font-medium bg-green-50 p-2 rounded border border-green-200 flex items-center justify-between">
+                      <span>
+                        ⏱️ Formatted Duration: {Math.floor(values.duration / 3600) > 0 ? `${Math.floor(values.duration / 3600)}h ` : ''}
+                        {Math.floor((values.duration % 3600) / 60)}m {values.duration % 60}s
+                      </span>
+                      <span className="text-gray-500 font-normal">({values.duration} total seconds)</span>
+                    </div>
+                  )}
                   <ErrorMessage name="duration" component="div" className="text-red-600 text-sm mt-1" />
                 </div>
 

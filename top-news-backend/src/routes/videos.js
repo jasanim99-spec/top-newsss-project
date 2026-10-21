@@ -165,6 +165,52 @@ router.get('/stats/dashboard', async (req, res) => {
 });
 
 // -------------------------------------------------------------------------
+// GET /short-videos/extract-duration - Automatically extract duration from YouTube / Video URL
+// -------------------------------------------------------------------------
+router.get('/extract-duration', async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: 'URL query parameter is required' });
+    }
+
+    let videoId = '';
+    const cleanUrl = url.trim();
+    if (cleanUrl.includes('embed/')) videoId = cleanUrl.split('embed/')[1]?.split('?')[0];
+    else if (cleanUrl.includes('shorts/')) videoId = cleanUrl.split('shorts/')[1]?.split('?')[0];
+    else if (cleanUrl.includes('watch?v=')) videoId = cleanUrl.split('watch?v=')[1]?.split('&')[0];
+    else if (cleanUrl.includes('youtu.be/')) videoId = cleanUrl.split('youtu.be/')[1]?.split('?')[0];
+
+    if (videoId) {
+      const ytRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept-Language': 'en-US,en;q=0.9'
+        }
+      });
+      const html = await ytRes.text();
+      const match = html.match(/"lengthSeconds":"(\d+)"/);
+      if (match) {
+        let duration = parseInt(match[1], 10);
+        if (duration > 43200) duration = 3600; // Cap runaway live streams at 1 hr
+        const hours = Math.floor(duration / 3600);
+        const minutes = Math.floor((duration % 3600) / 60);
+        const seconds = duration % 60;
+        const formatted = hours > 0
+          ? `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+          : `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        return res.json({ success: true, duration, formatted });
+      }
+    }
+
+    return res.status(404).json({ success: false, error: 'Could not automatically detect duration for this URL' });
+  } catch (err) {
+    console.error('Error extracting duration:', err);
+    res.status(500).json({ error: 'Failed to extract duration', details: err.message });
+  }
+});
+
+// -------------------------------------------------------------------------
 // GET /short-videos/:id - Fetch video by ID or Slug
 // -------------------------------------------------------------------------
 router.get('/:id', async (req, res) => {

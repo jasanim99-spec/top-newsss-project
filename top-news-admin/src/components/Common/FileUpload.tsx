@@ -7,6 +7,7 @@ interface FileUploadProps {
   value: string;
   onChange: (url: string) => void;
   onFileUpload?: (file: File, onProgress: (progress: number) => void) => Promise<string>;
+  onDurationDetected?: (durationInSeconds: number) => void;
   accept?: string;
   label?: string;
   folder?: string;
@@ -17,6 +18,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   value,
   onChange,
   onFileUpload,
+  onDurationDetected,
   accept = "image/*",
   label = "Cover Image",
   folder = "news",
@@ -33,6 +35,27 @@ const FileUpload: React.FC<FileUploadProps> = ({
     if (file.size > maxSizeMB * 1024 * 1024) {
       toast.error(`File size exceeds maximum limit of ${maxSizeMB}MB`);
       return;
+    }
+
+    // Auto-detect video duration if it's a video file
+    if (file.type.startsWith('video/') || accept.includes('video')) {
+      try {
+        const tempVideo = document.createElement('video');
+        tempVideo.preload = 'metadata';
+        tempVideo.src = URL.createObjectURL(file);
+        tempVideo.onloadedmetadata = () => {
+          URL.revokeObjectURL(tempVideo.src);
+          const dur = Math.round(tempVideo.duration);
+          if (dur > 0 && onDurationDetected) {
+            onDurationDetected(dur);
+            const m = Math.floor(dur / 60);
+            const s = dur % 60;
+            toast.success(`Video duration auto-detected: ${m}m ${s}s (${dur}s)`);
+          }
+        };
+      } catch (err) {
+        console.warn('Could not read video metadata:', err);
+      }
     }
 
     const uploader = onFileUpload || ((f: File, prog: (p: number) => void) => storageService.uploadNewsImage(f, folder + '_' + Date.now(), prog));

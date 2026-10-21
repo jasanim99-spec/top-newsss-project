@@ -255,5 +255,23 @@ export const videoService = {
       console.warn('PostgreSQL API getVideoStats error:', err);
       throw err;
     }
+  },
+
+  /**
+   * Automatically extract duration from YouTube / video URL
+   */
+  async extractDuration(url: string): Promise<{ duration: number; formatted: string } | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/short-videos/extract-duration?url=${encodeURIComponent(url)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && typeof data.duration === 'number') {
+          return { duration: data.duration, formatted: data.formatted };
+        }
+      }
+    } catch (e) {
+      console.warn('Error calling extractDuration API:', e);
+    }
+    return null;
   }
 };

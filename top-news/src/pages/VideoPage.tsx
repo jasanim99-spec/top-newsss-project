@@ -37,6 +37,17 @@ const sortOptions = [
   { value: 'most-read', label: 'Most Viewed' }
 ];
 
+function formatDuration(seconds?: number): string {
+  if (!seconds || seconds <= 0) return '0:00';
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  if (hours > 0) {
+    return hours + ':' + minutes.toString().padStart(2, '0') + ':' + remainingSeconds.toString().padStart(2, '0');
+  }
+  return minutes + ':' + remainingSeconds.toString().padStart(2, '0');
+}
+
 export default function VideoPage() {
   const { language, category, topic, slug } = useParams();
   const { currentLanguage } = useNewsStore();
@@ -328,7 +339,7 @@ export default function VideoPage() {
                       </div>
                       <div className="flex items-center space-x-1">
                         <Clock className="h-4 w-4" />
-                        <span>{Math.floor(currentVideo.duration / 60)}:{(currentVideo.duration % 60).toString().padStart(2, '0')}</span>
+                        <span>{formatDuration(currentVideo.duration)}</span>
                       </div>
                     </div>
                     
