@@ -6,6 +6,7 @@ import * as Yup from 'yup';
 import MDEditor from '@uiw/react-md-editor';
 import { ArrowLeft, Sparkles, Languages, Zap, Mic, MapPin, UserCheck } from 'lucide-react';
 import { newsService, generateSlug } from '@/services/newsService';
+import { storageService } from '@/services/storageService';
 import { authService } from '@/services/authService';
 import { aiService } from '@/services/aiService';
 import { NewsArticle, LANGUAGE_OPTIONS, CATEGORIES } from '@/types';
