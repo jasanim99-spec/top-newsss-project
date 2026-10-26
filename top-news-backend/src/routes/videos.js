@@ -189,9 +189,12 @@ router.get('/extract-duration', async (req, res) => {
         }
       });
       const html = await ytRes.text();
-      const match = html.match(/"lengthSeconds":"(\d+)"/);
+      const match = html.match(/"lengthSeconds":"(\d+)"/) || html.match(/"approxDurationMs":"(\d+)"/);
       if (match) {
         let duration = parseInt(match[1], 10);
+        if (match[0].includes('approxDurationMs')) {
+          duration = Math.round(duration / 1000);
+        }
         if (duration > 43200) duration = 3600; // Cap runaway live streams at 1 hr
         const hours = Math.floor(duration / 3600);
         const minutes = Math.floor((duration % 3600) / 60);

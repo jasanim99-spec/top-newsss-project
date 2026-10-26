@@ -35,19 +35,51 @@ const VideoForm: React.FC = () => {
   const [tempId] = useState(() => id || `video_${Date.now()}`);
   const [detectingDuration, setDetectingDuration] = useState(false);
 
-  const handleAutoDetectDuration = async (url: string, setFieldValue: (field: string, value: any) => void) => {
+  const handleAutoDetectDuration = async (url: string, setFieldValue: (field: string, value: any) => void, silent = false) => {
     if (!url) return;
     setDetectingDuration(true);
     try {
+      // 1. Try client-side HTML5 Video duration detection first (works for MP4 / WebM / Firebase Storage)
+      if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
+        try {
+          const videoElement = document.createElement('video');
+          videoElement.preload = 'metadata';
+          videoElement.src = url;
+          const detected = await new Promise<number>((resolve) => {
+            const timer = setTimeout(() => resolve(0), 2500);
+            videoElement.onloadedmetadata = () => {
+              clearTimeout(timer);
+              resolve(Math.round(videoElement.duration));
+            };
+            videoElement.onerror = () => {
+              clearTimeout(timer);
+              resolve(0);
+            };
+          });
+          if (detected > 0) {
+            setFieldValue('duration', detected);
+            const m = Math.floor(detected / 60);
+            const s = detected % 60;
+            toast.success(`Video duration auto-detected: ${m}m ${s}s (${detected}s)`);
+            return;
+          }
+        } catch (e) {
+          // fallback
+        }
+      }
+
+      // 2. Try backend YouTube extraction
       const res = await videoService.extractDuration(url);
       if (res && res.duration > 0) {
         setFieldValue('duration', res.duration);
         toast.success(`Video duration auto-detected: ${res.formatted} (${res.duration}s)`);
-      } else {
-        toast.error('Could not auto-detect duration. Please enter manually.');
+      } else if (!silent) {
+        toast('Could not auto-detect duration. You can enter seconds manually below.', { icon: 'ℹ️' });
       }
     } catch (err) {
-      toast.error('Failed to auto-detect duration');
+      if (!silent) {
+        toast('Could not auto-detect duration. You can enter seconds manually below.', { icon: 'ℹ️' });
+      }
     } finally {
       setDetectingDuration(false);
     }
@@ -258,8 +290,8 @@ const VideoForm: React.FC = () => {
                     value={values.videoUrl}
                     onChange={async (url) => {
                       setFieldValue('videoUrl', url);
-                      if (url && (url.includes('youtube.com') || url.includes('youtu.be'))) {
-                        await handleAutoDetectDuration(url, setFieldValue);
+                      if (url) {
+                        await handleAutoDetectDuration(url, setFieldValue, true);
                       }
                     }}
                     onDurationDetected={(dur) => {
@@ -298,7 +330,7 @@ const VideoForm: React.FC = () => {
                     {values.videoUrl && (values.videoUrl.includes('youtube.com') || values.videoUrl.includes('youtu.be')) && (
                       <button
                         type="button"
-                        onClick={() => handleAutoDetectDuration(values.videoUrl, setFieldValue)}
+                        onClick={() => handleAutoDetectDuration(values.videoUrl, setFieldValue, false)}
                         disabled={detectingDuration}
                         className="text-xs text-blue-600 hover:text-blue-800 font-medium underline flex items-center gap-1 disabled:opacity-50"
                       >
@@ -409,7 +441,7 @@ const VideoForm: React.FC = () => {
                 >
                   {isSubmitting || mutation.isPending
                     ? (isEditing ? 'Updating...' : 'Creating...')
-                    : (isEditing ? 'Create Video' : 'Create Video')
+                    : (isEditing ? 'Update Video' : 'Create Video')
                   }
                 </button>
               </div>
