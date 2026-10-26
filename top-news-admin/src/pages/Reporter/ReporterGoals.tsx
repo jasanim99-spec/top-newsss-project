@@ -24,13 +24,6 @@ export const ReporterGoals: React.FC = () => {
   const authorId = admin?.uid || admin?.id || user?.uid || user?.email || 'reporter_1';
   const reporterName = admin?.name || user?.name || user?.email?.split('@')[0] || 'Reporter';
 
-  // Fetch Goals Data
-  const { data: goalsData, isLoading: loadingGoals } = useQuery({
-    queryKey: ['reporter-goals', authorId],
-    queryFn: () => goalService.getReporterGoals(authorId),
-    refetchInterval: 5000,
-  });
-
   // Fetch Leaderboard Data
   const { data: leaderboardData, isLoading: loadingLeaderboard } = useQuery({
     queryKey: ['leaderboard'],
@@ -38,17 +31,41 @@ export const ReporterGoals: React.FC = () => {
     refetchInterval: 5000,
   });
 
-  const monthName = goalsData?.monthName || new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
-  const articlePercentage = goalsData?.articlePercentage || 0;
-  const viewsPercentage = goalsData?.viewsPercentage || 0;
-  const badges = goalsData?.badges || [];
   const leaderboard = leaderboardData?.leaderboard || [];
 
-  // Match current reporter rank from leaderboard or backend goals calculation
-  const userEntry = leaderboard.find(l => 
-    (l.authorId && l.authorId.toLowerCase().trim() === authorId.toLowerCase().trim()) ||
-    (l.name && l.name.toLowerCase().trim() === reporterName.toLowerCase().trim())
-  );
+  // Robust matching for current reporter against leaderboard items
+  const cleanReporterName = reporterName.replace(/[^a-zA-Z]/g, '').toLowerCase();
+  const cleanAuthorId = (authorId || '').toLowerCase().trim();
+
+  const isUserMatch = (entryAuthorId?: string, entryName?: string) => {
+    if (!entryAuthorId && !entryName) return false;
+    const eId = (entryAuthorId || '').toLowerCase().trim();
+    const eName = (entryName || '').toLowerCase().trim();
+
+    // 1. Direct ID match
+    if (eId && cleanAuthorId && (eId === cleanAuthorId || cleanAuthorId.includes(eId) || eId.includes(cleanAuthorId))) {
+      return true;
+    }
+    // 2. Direct Name match
+    if (eName && reporterName && (eName === reporterName.toLowerCase().trim() || eName.includes(reporterName.toLowerCase().trim()))) {
+      return true;
+    }
+    // 3. Name contains cleaned prefix (e.g. 'mahin' in 'mahin jasani')
+    if (cleanReporterName.length >= 3 && eName && eName.includes(cleanReporterName)) {
+      return true;
+    }
+    return false;
+  };
+
+  const userEntry = leaderboard.find(l => isUserMatch(l.authorId, l.name));
+  const effectiveAuthorId = userEntry?.authorId || authorId;
+
+  // Fetch Goals Data
+  const { data: goalsData, isLoading: loadingGoals } = useQuery({
+    queryKey: ['reporter-goals', effectiveAuthorId],
+    queryFn: () => goalService.getReporterGoals(effectiveAuthorId),
+    refetchInterval: 5000,
+  });
   const currentRank = userEntry?.rank || goalsData?.rank || 1;
   const rankMedal = currentRank === 1 ? '🥇' : currentRank === 2 ? '🥈' : currentRank === 3 ? '🥉' : '🎖️';
 
@@ -295,9 +312,7 @@ export const ReporterGoals: React.FC = () => {
                     3: '🥉'
                   }[entry.rank] || `#${entry.rank}`;
 
-                  const isCurrentUser = 
-                    (entry.authorId && entry.authorId.toLowerCase().trim() === authorId.toLowerCase().trim()) ||
-                    (entry.name && entry.name.toLowerCase().trim() === reporterName.toLowerCase().trim());
+                  const isCurrentUser = isUserMatch(entry.authorId, entry.name);
 
                   return (
                     <tr 

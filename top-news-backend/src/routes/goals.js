@@ -23,8 +23,35 @@ router.get('/reporter/:reporterId', async (req, res) => {
     const decodedId = decodeURIComponent(reporterId);
     const { startOfMonth, endOfMonth, monthName } = getCurrentMonthBounds();
 
+    const rawPrefix = decodedId.includes('@') ? decodedId.split('@')[0] : decodedId;
+    const cleanAlpha = rawPrefix.replace(/[^a-zA-Z]/g, '').toLowerCase();
+
+    // Resolve user from users table first if available
+    let userRow = null;
+    try {
+      const userRes = await query(
+        `SELECT id, name, email FROM users 
+         WHERE id = $1 
+            OR LOWER(id) = LOWER($1) 
+            OR LOWER(email) = LOWER($1) 
+            OR LOWER(name) = LOWER($1) 
+            OR (length($2) >= 3 AND LOWER(name) LIKE '%' || $2 || '%')
+            OR (length($2) >= 3 AND LOWER(email) LIKE '%' || $2 || '%')
+         LIMIT 1`,
+        [decodedId, cleanAlpha]
+      );
+      if (userRes && userRes.rows && userRes.rows.length > 0) {
+        userRow = userRes.rows[0];
+      }
+    } catch (uErr) {
+      console.warn('User lookup in goals error:', uErr.message);
+    }
+
+    const targetUserId = userRow?.id || decodedId;
+    const targetUserName = userRow?.name || decodedId;
+
     // Fetch custom target or use defaults
-    const custom = customTargets.get(decodedId) || {};
+    const custom = customTargets.get(decodedId) || customTargets.get(targetUserId) || {};
     const targetArticles = custom.targetArticles || 20;
     const targetViews = custom.targetViews || 10000;
 
@@ -37,13 +64,27 @@ router.get('/reporter/:reporterId', async (req, res) => {
 
     // Query DB if available
     try {
-      const searchPattern = `%${decodedId.replace(/[^a-zA-Z0-9 ]/g, '')}%`;
       const articlesRes = await query(
         `SELECT id, views, is_breaking, status, created_at, published_at 
          FROM news_articles 
-         WHERE status != 'deleted' AND (author_id = $1 OR LOWER(author_id) = LOWER($1) OR LOWER(author_name) LIKE LOWER($2))
+         WHERE status != 'deleted' 
+           AND (
+             author_id = $1 
+             OR LOWER(author_id) = LOWER($1)
+             OR (author_id = $2 OR LOWER(author_id) = LOWER($2))
+             OR LOWER(author_name) = LOWER($3)
+             OR (length($4) >= 3 AND LOWER(author_name) LIKE '%' || $4 || '%')
+             OR author_id IN (
+               SELECT id FROM users 
+               WHERE id = $1 
+                  OR LOWER(id) = LOWER($1) 
+                  OR LOWER(email) = LOWER($1) 
+                  OR LOWER(name) = LOWER($3)
+                  OR (length($4) >= 3 AND LOWER(name) LIKE '%' || $4 || '%')
+             )
+           )
          ORDER BY created_at DESC`,
-        [decodedId, searchPattern]
+        [decodedId, targetUserId, targetUserName, cleanAlpha]
       );
 
       if (articlesRes && articlesRes.rows) {
@@ -170,7 +211,10 @@ router.get('/reporter/:reporterId', async (req, res) => {
       if (rankRes && rankRes.rows) {
         const foundIdx = rankRes.rows.findIndex(r => 
           (r.author_id && r.author_id.toLowerCase().trim() === decodedId.toLowerCase().trim()) ||
-          (r.name && r.name.toLowerCase().trim() === decodedId.toLowerCase().trim())
+          (userRow && r.author_id && r.author_id.toLowerCase().trim() === userRow.id.toLowerCase().trim()) ||
+          (r.name && r.name.toLowerCase().trim() === decodedId.toLowerCase().trim()) ||
+          (userRow && r.name && r.name.toLowerCase().trim() === userRow.name.toLowerCase().trim()) ||
+          (cleanAlpha.length >= 3 && r.name && r.name.toLowerCase().includes(cleanAlpha))
         );
         if (foundIdx !== -1) {
           calculatedRank = foundIdx + 1;
