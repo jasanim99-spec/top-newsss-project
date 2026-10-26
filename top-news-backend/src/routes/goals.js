@@ -153,10 +153,15 @@ router.get('/reporter/:reporterId', async (req, res) => {
     try {
       const rankRes = await query(
         `SELECT u.id as author_id, u.name as name,
-                COALESCE(COUNT(CASE WHEN na.status = 'published' AND na.created_at >= $1 AND na.created_at <= $2 THEN 1 END), 0)::int as published_count,
-                COALESCE(SUM(CASE WHEN na.status = 'published' AND na.created_at >= $1 AND na.created_at <= $2 THEN na.views ELSE 0 END), 0)::int as total_views
+                COALESCE(COUNT(CASE WHEN na.status = 'published' AND COALESCE(na.published_at, na.created_at) >= $1::timestamptz AND COALESCE(na.published_at, na.created_at) <= $2::timestamptz THEN 1 END), 0)::int as published_count,
+                COALESCE(SUM(CASE WHEN na.status = 'published' AND COALESCE(na.published_at, na.created_at) >= $1::timestamptz AND COALESCE(na.published_at, na.created_at) <= $2::timestamptz THEN na.views ELSE 0 END), 0)::int as total_views
          FROM users u
-         LEFT JOIN news_articles na ON (na.author_id = u.id OR LOWER(na.author_name) = LOWER(u.name))
+         LEFT JOIN news_articles na ON (
+           na.author_id = u.id 
+           OR LOWER(na.author_id) = LOWER(u.id) 
+           OR (u.email IS NOT NULL AND LOWER(na.author_id) = LOWER(u.email))
+           OR LOWER(TRIM(na.author_name)) = LOWER(TRIM(u.name))
+         )
          WHERE u.role = 'reporter'
          GROUP BY u.id, u.name
          ORDER BY published_count DESC, total_views DESC, u.name ASC`,
@@ -208,10 +213,15 @@ router.get('/leaderboard', async (req, res) => {
     try {
       const dbRes = await query(
         `SELECT u.id as author_id, u.name as name, COALESCE(u.city, 'Gujarat Bureau') as city,
-                COALESCE(COUNT(CASE WHEN na.status = 'published' AND na.created_at >= $1 AND na.created_at <= $2 THEN 1 END), 0)::int as published_count,
-                COALESCE(SUM(CASE WHEN na.status = 'published' AND na.created_at >= $1 AND na.created_at <= $2 THEN na.views ELSE 0 END), 0)::int as total_views
+                COALESCE(COUNT(CASE WHEN na.status = 'published' AND COALESCE(na.published_at, na.created_at) >= $1::timestamptz AND COALESCE(na.published_at, na.created_at) <= $2::timestamptz THEN 1 END), 0)::int as published_count,
+                COALESCE(SUM(CASE WHEN na.status = 'published' AND COALESCE(na.published_at, na.created_at) >= $1::timestamptz AND COALESCE(na.published_at, na.created_at) <= $2::timestamptz THEN na.views ELSE 0 END), 0)::int as total_views
          FROM users u
-         LEFT JOIN news_articles na ON (na.author_id = u.id OR LOWER(na.author_name) = LOWER(u.name))
+         LEFT JOIN news_articles na ON (
+           na.author_id = u.id 
+           OR LOWER(na.author_id) = LOWER(u.id) 
+           OR (u.email IS NOT NULL AND LOWER(na.author_id) = LOWER(u.email))
+           OR LOWER(TRIM(na.author_name)) = LOWER(TRIM(u.name))
+         )
          WHERE u.role = 'reporter'
          GROUP BY u.id, u.name, u.city
          ORDER BY published_count DESC, total_views DESC, u.name ASC

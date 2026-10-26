@@ -295,7 +295,9 @@ export const ReporterGoals: React.FC = () => {
                     3: '🥉'
                   }[entry.rank] || `#${entry.rank}`;
 
-                  const isCurrentUser = entry.authorId === authorId || entry.name.toLowerCase() === reporterName.toLowerCase();
+                  const isCurrentUser = 
+                    (entry.authorId && entry.authorId.toLowerCase().trim() === authorId.toLowerCase().trim()) ||
+                    (entry.name && entry.name.toLowerCase().trim() === reporterName.toLowerCase().trim());
 
                   return (
                     <tr 
