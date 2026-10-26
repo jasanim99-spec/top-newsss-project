@@ -135,9 +135,10 @@ export const videoService = {
       updatedAt: new Date().toISOString()
     };
 
+    // Non-blocking background sync to Firestore
     try {
       const payload = videoToFirestore(fullVideo, true);
-      await setDoc(doc(db, 'videos', targetId), payload, { merge: true });
+      setDoc(doc(db, 'videos', targetId), payload, { merge: true }).catch(() => {});
     } catch (e) { }
 
     if (syncChannel) {
@@ -168,10 +169,11 @@ export const videoService = {
 
     const finalVideo: ShortVideo = updatedVideo || ({ id, ...data } as ShortVideo);
 
+    // Non-blocking background sync to Firestore
     try {
       const docRef = doc(db, 'videos', id);
       const payload = videoToFirestore(finalVideo, false);
-      await setDoc(docRef, payload, { merge: true });
+      setDoc(docRef, payload, { merge: true }).catch(() => {});
     } catch (e) { }
 
     if (syncChannel) {

@@ -82,10 +82,31 @@ export const PendingReviews: React.FC = () => {
     }
   });
 
-  // Approve News Mutation
+  // Approve News Mutation with Instant Optimistic UI Update
   const approveMutation = useMutation({
     mutationFn: async (id: string) => {
       return newsService.approveNews(id);
+    },
+    onMutate: async (id: string) => {
+      // Optimistically remove from pending list immediately (0 seconds)
+      queryClient.setQueriesData({ queryKey: ['pending-news-reviews'] }, (old: any) => {
+        if (!old || !old.articles) return old;
+        return {
+          ...old,
+          total: Math.max(0, (old.total || old.articles.length) - 1),
+          articles: old.articles.filter((a: any) => (a.id || a._id) !== id)
+        };
+      });
+
+      // Optimistically decrement pending count in dashboard stats
+      queryClient.setQueryData(['news-stats'], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pending: Math.max(0, (old.pending || 0) - 1),
+          published: (old.published || 0) + 1
+        };
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-news-reviews'] });
@@ -94,14 +115,36 @@ export const PendingReviews: React.FC = () => {
       toast.success('✅ Article Approved & Published Live!');
     },
     onError: (err: any) => {
+      queryClient.invalidateQueries({ queryKey: ['pending-news-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['news-stats'] });
       toast.error(err.message || 'Failed to approve article.');
     }
   });
 
-  // Bulk Approve
+  // Bulk Approve with Instant Optimistic UI Update
   const bulkApproveMutation = useMutation({
     mutationFn: async (ids: string[]) => {
       return Promise.all(ids.map(id => newsService.approveNews(id)));
+    },
+    onMutate: async (ids: string[]) => {
+      const idSet = new Set(ids);
+      queryClient.setQueriesData({ queryKey: ['pending-news-reviews'] }, (old: any) => {
+        if (!old || !old.articles) return old;
+        return {
+          ...old,
+          total: Math.max(0, (old.total || old.articles.length) - ids.length),
+          articles: old.articles.filter((a: any) => !idSet.has(a.id || a._id))
+        };
+      });
+
+      queryClient.setQueryData(['news-stats'], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pending: Math.max(0, (old.pending || 0) - ids.length),
+          published: (old.published || 0) + ids.length
+        };
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-news-reviews'] });
@@ -111,23 +154,47 @@ export const PendingReviews: React.FC = () => {
       toast.success('🎉 Selected articles published live successfully!');
     },
     onError: (err: any) => {
+      queryClient.invalidateQueries({ queryKey: ['pending-news-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['news-stats'] });
       toast.error(err.message || 'Failed bulk approve.');
     }
   });
 
-  // Reject Mutation
+  // Reject Mutation with Instant Optimistic UI Update
   const rejectMutation = useMutation({
     mutationFn: async ({ id, feedback }: { id: string; feedback: string }) => {
       return newsService.rejectNews(id, feedback);
     },
+    onMutate: async ({ id }) => {
+      queryClient.setQueriesData({ queryKey: ['pending-news-reviews'] }, (old: any) => {
+        if (!old || !old.articles) return old;
+        return {
+          ...old,
+          total: Math.max(0, (old.total || old.articles.length) - 1),
+          articles: old.articles.filter((a: any) => (a.id || a._id) !== id)
+        };
+      });
+
+      queryClient.setQueryData(['news-stats'], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pending: Math.max(0, (old.pending || 0) - 1),
+          rejected: (old.rejected || 0) + 1
+        };
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-news-reviews'] });
       queryClient.invalidateQueries({ queryKey: ['news'] });
+      queryClient.invalidateQueries({ queryKey: ['news-stats'] });
       toast.success('Revision note sent to reporter.');
       setFeedbackModalArticle(null);
       setFeedbackNote('');
     },
     onError: (err: any) => {
+      queryClient.invalidateQueries({ queryKey: ['pending-news-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['news-stats'] });
       toast.error(err.message || 'Error sending revision note.');
     }
   });

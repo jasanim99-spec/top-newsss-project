@@ -67,31 +67,27 @@ export const NewsForm: React.FC = () => {
         result = await newsService.createNews(newsData);
       }
       if (sendPush && newsData.title) {
-        try {
-          const API = API_BASE_URL;
-          await fetch(`${API}/notifications/send`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              title: newsData.isBreaking ? `🔴 BREAKING: ${newsData.title}` : newsData.title,
-              body: newsData.description || newsData.title,
-              icon: newsData.imageUrl || '/logo.png',
-              url: newsData.slug ? `/article/${newsData.slug}` : '/',
-            }),
-          });
-        } catch (pushErr) {
-          console.error('Push notification failed:', pushErr);
-        }
+        // Fire-and-forget push notification in background
+        fetch(`${API_BASE_URL}/notifications/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: newsData.isBreaking ? `🔴 BREAKING: ${newsData.title}` : newsData.title,
+            body: newsData.description || newsData.title,
+            icon: newsData.imageUrl || '/logo.png',
+            url: newsData.slug ? `/article/${newsData.slug}` : '/',
+          }),
+        }).catch((pushErr) => {
+          console.warn('Push notification failed:', pushErr);
+        });
       }
       return result;
     },
     onSuccess: () => {
-      queryClient.resetQueries({ queryKey: ['news'] });
       queryClient.invalidateQueries({ queryKey: ['news'] });
       queryClient.invalidateQueries({ queryKey: ['news-stats'] });
       queryClient.invalidateQueries({ queryKey: ['reporter-articles'] });
       queryClient.invalidateQueries({ queryKey: ['reporter-stats'] });
-      queryClient.refetchQueries({ queryKey: ['news'] });
       toast.success(isEditing ? 'News updated successfully' : 'News created successfully');
       if (isReporterRoute) {
         navigate('/reporter/articles');

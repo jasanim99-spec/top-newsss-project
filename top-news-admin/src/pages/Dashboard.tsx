@@ -50,18 +50,18 @@ const Dashboard: React.FC = () => {
   const { data: newsStats, isLoading: newsLoading } = useQuery({
     queryKey: ['news-stats'],
     queryFn: () => newsService.getNewsStats(),
-    staleTime: 5000,
-    refetchInterval: 10000,
-    retry: 3,
+    staleTime: 0,
+    refetchInterval: 5000,
+    retry: 2,
     placeholderData: (previousData) => previousData,
   });
 
   const { data: videoStats, isLoading: videoLoading } = useQuery({
     queryKey: ['video-stats'],
     queryFn: () => videoService.getVideoStats(),
-    staleTime: 5000,
-    refetchInterval: 10000,
-    retry: 3,
+    staleTime: 0,
+    refetchInterval: 5000,
+    retry: 2,
     placeholderData: (previousData) => previousData,
   });
 

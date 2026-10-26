@@ -139,10 +139,10 @@ export const newsService = {
       updatedAt: new Date().toISOString()
     };
 
-    // Dual update to Firestore for backup compatibility
+    // Non-blocking background sync to Firestore for backup compatibility
     try {
       const payload = newsToFirestore(fullArticle, true);
-      await setDoc(doc(db, 'news', targetId), payload, { merge: true });
+      setDoc(doc(db, 'news', targetId), payload, { merge: true }).catch(() => {});
     } catch (e) { }
 
     if (syncChannel) {
@@ -177,11 +177,11 @@ export const newsService = {
 
     const finalArticle: NewsArticle = updatedArticle || ({ id, ...data } as NewsArticle);
 
-    // Dual update to Firestore for backup compatibility
+    // Non-blocking background sync to Firestore for backup compatibility
     try {
       const docRef = doc(db, 'news', id);
       const payload = newsToFirestore(finalArticle, false);
-      await setDoc(docRef, payload, { merge: true });
+      setDoc(docRef, payload, { merge: true }).catch(() => {});
     } catch (e) { }
 
     if (syncChannel) {
